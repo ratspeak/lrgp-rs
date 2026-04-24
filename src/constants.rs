@@ -61,6 +61,13 @@ pub const KEY_APP: &str = "a";
 pub const KEY_COMMAND: &str = "c";
 pub const KEY_SESSION: &str = "s";
 pub const KEY_PAYLOAD: &str = "p";
+/// Optional 8-byte per-envelope replay-dedup nonce.
+pub const KEY_NONCE: &str = "n";
+
+/// Nonce / replay-dedup sizing.
+pub const NONCE_BYTES: usize = 8;
+pub const DEDUP_CACHE_PER_SESSION: usize = 512;
+pub const DEDUP_TTL_SECONDS: u64 = 600;
 
 /// Error payload keys.
 pub const KEY_ERR_CODE: &str = "code";

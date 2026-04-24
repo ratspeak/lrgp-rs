@@ -11,13 +11,23 @@ pub type Envelope = HashMap<String, rmpv::Value>;
 /// Convenience re-export of rmpv::Value for payload manipulation.
 pub use rmpv::Value;
 
-/// Build an LRGP envelope dict.
+/// Generate a fresh 8-byte random nonce using the platform CSPRNG.
+pub fn generate_nonce() -> [u8; NONCE_BYTES] {
+    use rand::RngCore;
+    let mut n = [0u8; NONCE_BYTES];
+    rand::thread_rng().fill_bytes(&mut n);
+    n
+}
+
+/// Build an LRGP envelope dict. If `nonce` is `None` a fresh CSPRNG nonce is
+/// generated; pass `Some(..)` to build deterministic test vectors.
 pub fn pack_envelope(
     app_id: &str,
     version: u32,
     command: &str,
     session_id: &str,
     payload: Option<HashMap<String, rmpv::Value>>,
+    nonce: Option<[u8; NONCE_BYTES]>,
 ) -> Envelope {
     let mut env = Envelope::new();
     env.insert(KEY_APP.into(), rmpv::Value::String(format!("{app_id}.{version}").into()));
@@ -30,6 +40,8 @@ pub fn pack_envelope(
             None => rmpv::Value::Map(vec![]),
         },
     );
+    let n = nonce.unwrap_or_else(generate_nonce);
+    env.insert(KEY_NONCE.into(), rmpv::Value::Binary(n.to_vec()));
     env
 }
 
@@ -100,6 +112,20 @@ pub fn unpack_envelope(fields: &HashMap<u8, rmpv::Value>) -> Result<Option<Envel
         return Err(LrgpError::InvalidEnvelope(format!(
             "Invalid app.version format: {app_ver:?}"
         )));
+    }
+
+    // Validate the nonce if present; absence is accepted for backward
+    // compatibility with pre-nonce peers (the caller's dedup layer logs
+    // these once per session).
+    if let Some(v) = envelope.get(KEY_NONCE) {
+        match v {
+            rmpv::Value::Binary(b) if b.len() == NONCE_BYTES => {}
+            _ => {
+                return Err(LrgpError::InvalidEnvelope(format!(
+                    "KEY_NONCE must be {NONCE_BYTES}-byte binary; got {v:?}"
+                )));
+            }
+        }
     }
 
     Ok(Some(envelope))
@@ -205,7 +231,7 @@ mod tests {
             rmpv::Value::String("____X____".into()),
         );
 
-        let env = pack_envelope("ttt", 1, "move", "a1b2c3d4e5f6g7h8", Some(payload));
+        let env = pack_envelope("ttt", 1, "move", "a1b2c3d4e5f6g7h8", Some(payload), None);
 
         let bytes = pack_to_bytes(&env).unwrap();
         let recovered = unpack_from_bytes(&bytes).unwrap();
@@ -226,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_validate_envelope_size_ok() {
-        let env = pack_envelope("ttt", 1, "challenge", "a1b2c3d4e5f6g7h8", None);
+        let env = pack_envelope("ttt", 1, "challenge", "a1b2c3d4e5f6g7h8", None, None);
         let size = validate_envelope_size(&env).unwrap();
         assert!(size <= ENVELOPE_MAX_PACKED);
     }
@@ -238,7 +264,7 @@ mod tests {
         let big_string = "x".repeat(300);
         payload.insert("data".to_string(), rmpv::Value::String(big_string.into()));
 
-        let env = pack_envelope("ttt", 1, "move", "a1b2c3d4e5f6g7h8", Some(payload));
+        let env = pack_envelope("ttt", 1, "move", "a1b2c3d4e5f6g7h8", Some(payload), None);
         assert!(matches!(
             validate_envelope_size(&env),
             Err(LrgpError::EnvelopeTooLarge(_, _))
@@ -264,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_unpack_envelope_valid() {
-        let env = pack_envelope("ttt", 1, "challenge", "abc123", None);
+        let env = pack_envelope("ttt", 1, "challenge", "abc123", None, None);
         let lxmf_fields = pack_lxmf_fields(&env);
         let result = unpack_envelope(&lxmf_fields).unwrap().unwrap();
         assert_eq!(
@@ -281,7 +307,7 @@ mod tests {
             FIELD_CUSTOM_TYPE,
             rmpv::Value::String("rlap.v1".into()),
         );
-        let env = pack_envelope("ttt", 1, "challenge", "abc123", None);
+        let env = pack_envelope("ttt", 1, "challenge", "abc123", None, None);
         lxmf.insert(FIELD_CUSTOM_META, value_from_map(env));
         let result = unpack_envelope(&lxmf).unwrap();
         assert!(result.is_some());

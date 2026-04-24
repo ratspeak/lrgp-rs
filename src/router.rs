@@ -99,7 +99,7 @@ impl LrgpRouter {
         let result: OutgoingResult =
             app.handle_outgoing(session_id, command, payload, identity_id);
 
-        let env = envelope::pack_envelope(app_id, version, command, session_id, Some(result.payload));
+        let env = envelope::pack_envelope(app_id, version, command, session_id, Some(result.payload), None);
         Ok((env, result.fallback_text))
     }
 }
@@ -212,7 +212,7 @@ mod tests {
         let router = LrgpRouter::new();
         router.register(Box::new(MockGame));
 
-        let env = envelope::pack_envelope("mock", 1, "challenge", "sess1", None);
+        let env = envelope::pack_envelope("mock", 1, "challenge", "sess1", None, None);
         let result = router.dispatch_incoming(&env, "sender", "local").unwrap();
         assert!(result.error.is_none());
         assert!(result.emit.is_some());
@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn test_dispatch_incoming_unknown_app() {
         let router = LrgpRouter::new();
-        let env = envelope::pack_envelope("unknown", 1, "challenge", "sess1", None);
+        let env = envelope::pack_envelope("unknown", 1, "challenge", "sess1", None, None);
         let result = router.dispatch_incoming(&env, "sender", "local");
         assert!(matches!(result, Err(LrgpError::UnknownApp(_))));
     }

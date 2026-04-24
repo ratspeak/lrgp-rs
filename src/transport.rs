@@ -118,7 +118,7 @@ mod tests {
 
     #[test]
     fn test_pack_and_extract_roundtrip() {
-        let env = envelope::pack_envelope("ttt", 1, "challenge", "abcdef0123456789", None);
+        let env = envelope::pack_envelope("ttt", 1, "challenge", "abcdef0123456789", None, None);
         let raw_fields = pack_into_fields(&env).unwrap();
         let recovered = extract_envelope(&raw_fields).unwrap().unwrap();
 
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_is_lrgp_message_true() {
-        let env = envelope::pack_envelope("ttt", 1, "move", "abc", None);
+        let env = envelope::pack_envelope("ttt", 1, "move", "abc", None, None);
         let raw_fields = pack_into_fields(&env).unwrap();
         assert!(is_lrgp_message(&raw_fields));
     }
@@ -181,7 +181,7 @@ mod tests {
         let mut type_buf = Vec::new();
         rmpv::encode::write_value(&mut type_buf, &type_val).unwrap();
 
-        let env = envelope::pack_envelope("ttt", 1, "challenge", "abc", None);
+        let env = envelope::pack_envelope("ttt", 1, "challenge", "abc", None, None);
         let env_val = envelope::value_from_map(env);
         let mut env_buf = Vec::new();
         rmpv::encode::write_value(&mut env_buf, &env_val).unwrap();
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn test_fields_bytes_to_rmpv() {
-        let env = envelope::pack_envelope("ttt", 1, "move", "abc", None);
+        let env = envelope::pack_envelope("ttt", 1, "move", "abc", None, None);
         let raw = pack_into_fields(&env).unwrap();
         let rmpv_fields = fields_bytes_to_rmpv(&raw).unwrap();
         assert!(rmpv_fields.contains_key(&FIELD_CUSTOM_TYPE));

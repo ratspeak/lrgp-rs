@@ -7,7 +7,7 @@ use lrgp::envelope::*;
 
 fn main() {
     // Pack a challenge envelope
-    let env = pack_envelope("ttt", 1, "challenge", "a1b2c3d4e5f6g7h8", None);
+    let env = pack_envelope("ttt", 1, "challenge", "a1b2c3d4e5f6g7h8", None, None);
     println!("Challenge envelope: {env:?}");
 
     // Validate size fits OPPORTUNISTIC delivery
@@ -31,7 +31,7 @@ fn main() {
     payload.insert("b".to_string(), rmpv::Value::String("____X____".into()));
     payload.insert("n".to_string(), rmpv::Value::Integer(1.into()));
 
-    let move_env = pack_envelope("ttt", 1, "move", "a1b2c3d4e5f6g7h8", Some(payload));
+    let move_env = pack_envelope("ttt", 1, "move", "a1b2c3d4e5f6g7h8", Some(payload), None);
     let move_size = validate_envelope_size(&move_env).unwrap();
     println!("\nMove envelope size: {move_size} bytes");
 
