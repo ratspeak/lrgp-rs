@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 — 2026-05-01
+
+### Added
+
+- **`LrgpRouter::snapshot_before_outgoing`** and **`LrgpRouter::rollback_outgoing`** — convenience wrappers around the trait-level `GameApp::snapshot_session` / `rollback_session` for transactional dispatch. Standard pattern: snapshot, dispatch, send, rollback on send failure. Returns `None` for unknown apps or apps that haven't opted in to rollback (the trait default returns `None`). Promoted from the Ratspeak vendored copy of this crate.
+
 ## 0.3.0 — 2026-05-01
 
 ### Added
