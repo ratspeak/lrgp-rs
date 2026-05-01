@@ -11,14 +11,12 @@ use crate::envelope::{self, Envelope};
 use crate::errors::LrgpError;
 
 /// Check whether an LXMF fields dict contains an LRGP game message.
-/// Recognizes both `lrgp.v1` and legacy `rlap.v1`/`ratspeak.game` markers.
 pub fn is_lrgp_message(fields: &HashMap<u8, Vec<u8>>) -> bool {
     match fields.get(&FIELD_CUSTOM_TYPE) {
         Some(data) => {
-            // Try to decode the msgpack-encoded string
             if let Ok(val) = rmpv::decode::read_value(&mut &data[..]) {
                 if let Some(s) = envelope::value_as_str(&val) {
-                    return s == PROTOCOL_TYPE || LEGACY_TYPES.contains(&s);
+                    return s == PROTOCOL_TYPE;
                 }
             }
             false
@@ -30,13 +28,12 @@ pub fn is_lrgp_message(fields: &HashMap<u8, Vec<u8>>) -> bool {
 /// Extract an LRGP envelope from raw LXMF field bytes.
 ///
 /// Steps:
-///   1. Check `fields[0xFB]` for the LRGP (or legacy) protocol marker.
+///   1. Check `fields[0xFB]` for the `lrgp.v1` protocol marker.
 ///   2. Decode `fields[0xFD]` from msgpack bytes into an rmpv::Value.
 ///   3. Convert that value into a `HashMap<String, Value>` envelope.
 ///
 /// Returns `Ok(None)` if the message is not an LRGP message.
 pub fn extract_envelope(fields: &HashMap<u8, Vec<u8>>) -> Result<Option<Envelope>, LrgpError> {
-    // 1. Check type marker
     let type_data = match fields.get(&FIELD_CUSTOM_TYPE) {
         Some(d) => d,
         None => return Ok(None),
@@ -44,7 +41,7 @@ pub fn extract_envelope(fields: &HashMap<u8, Vec<u8>>) -> Result<Option<Envelope
     let type_val = rmpv::decode::read_value(&mut &type_data[..])
         .map_err(|e| LrgpError::InvalidEnvelope(format!("type field decode error: {e}")))?;
     let marker = envelope::value_as_str(&type_val).unwrap_or("");
-    if marker != PROTOCOL_TYPE && !LEGACY_TYPES.contains(&marker) {
+    if marker != PROTOCOL_TYPE {
         return Ok(None);
     }
 
@@ -60,8 +57,7 @@ pub fn extract_envelope(fields: &HashMap<u8, Vec<u8>>) -> Result<Option<Envelope
     let env = envelope::map_from_value(&meta_val)
         .ok_or_else(|| LrgpError::InvalidEnvelope("meta field is not a map".into()))?;
 
-    // Validate required keys
-    for key in &[KEY_APP, KEY_COMMAND, KEY_SESSION, KEY_PAYLOAD] {
+    for key in &[KEY_APP, KEY_COMMAND, KEY_SESSION, KEY_PAYLOAD, KEY_NONCE] {
         if !env.contains_key(*key) {
             return Err(LrgpError::InvalidEnvelope(format!(
                 "Missing required key: {key}"
@@ -146,55 +142,9 @@ mod tests {
     }
 
     #[test]
-    fn test_is_lrgp_message_legacy_rlap() {
-        // Simulate legacy rlap.v1 marker
-        let type_val = rmpv::Value::String("rlap.v1".into());
-        let mut type_buf = Vec::new();
-        rmpv::encode::write_value(&mut type_buf, &type_val).unwrap();
-
-        let mut fields = HashMap::new();
-        fields.insert(FIELD_CUSTOM_TYPE, type_buf);
-        assert!(is_lrgp_message(&fields));
-    }
-
-    #[test]
-    fn test_is_lrgp_message_legacy_ratspeak() {
-        let type_val = rmpv::Value::String("ratspeak.game".into());
-        let mut type_buf = Vec::new();
-        rmpv::encode::write_value(&mut type_buf, &type_val).unwrap();
-
-        let mut fields = HashMap::new();
-        fields.insert(FIELD_CUSTOM_TYPE, type_buf);
-        assert!(is_lrgp_message(&fields));
-    }
-
-    #[test]
     fn test_extract_envelope_not_lrgp() {
         let fields: HashMap<u8, Vec<u8>> = HashMap::new();
         assert!(extract_envelope(&fields).unwrap().is_none());
-    }
-
-    #[test]
-    fn test_extract_envelope_legacy_rlap() {
-        // Build an rlap.v1-marked message
-        let type_val = rmpv::Value::String("rlap.v1".into());
-        let mut type_buf = Vec::new();
-        rmpv::encode::write_value(&mut type_buf, &type_val).unwrap();
-
-        let env = envelope::pack_envelope("ttt", 1, "challenge", "abc", None, None);
-        let env_val = envelope::value_from_map(env);
-        let mut env_buf = Vec::new();
-        rmpv::encode::write_value(&mut env_buf, &env_val).unwrap();
-
-        let mut fields = HashMap::new();
-        fields.insert(FIELD_CUSTOM_TYPE, type_buf);
-        fields.insert(FIELD_CUSTOM_META, env_buf);
-
-        let result = extract_envelope(&fields).unwrap().unwrap();
-        assert_eq!(
-            envelope::value_as_str(result.get(KEY_COMMAND).unwrap()).unwrap(),
-            "challenge"
-        );
     }
 
     #[test]

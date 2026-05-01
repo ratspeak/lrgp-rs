@@ -69,14 +69,11 @@ pub fn pack_lxmf_fields(envelope: &Envelope) -> HashMap<u8, rmpv::Value> {
 }
 
 /// Extract and validate an LRGP envelope from LXMF fields.
-/// Returns `None` if this is not an LRGP (or legacy RLAP) message.
+/// Returns `None` if this is not an LRGP message.
 pub fn unpack_envelope(fields: &HashMap<u8, rmpv::Value>) -> Result<Option<Envelope>, LrgpError> {
     let custom_type = fields.get(&FIELD_CUSTOM_TYPE);
     let is_lrgp = match custom_type {
-        Some(rmpv::Value::String(s)) => {
-            let marker = s.as_str().unwrap_or("");
-            marker == PROTOCOL_TYPE || LEGACY_TYPES.contains(&marker)
-        }
+        Some(rmpv::Value::String(s)) => s.as_str() == Some(PROTOCOL_TYPE),
         _ => false,
     };
     if !is_lrgp {
@@ -90,8 +87,7 @@ pub fn unpack_envelope(fields: &HashMap<u8, rmpv::Value>) -> Result<Option<Envel
     let envelope = map_from_value(meta)
         .ok_or_else(|| LrgpError::InvalidEnvelope("FIELD_CUSTOM_META is not a map".into()))?;
 
-    // Check required keys
-    for key in &[KEY_APP, KEY_COMMAND, KEY_SESSION, KEY_PAYLOAD] {
+    for key in &[KEY_APP, KEY_COMMAND, KEY_SESSION, KEY_PAYLOAD, KEY_NONCE] {
         if !envelope.contains_key(*key) {
             return Err(LrgpError::InvalidEnvelope(format!(
                 "Missing envelope key: {key}"
@@ -99,7 +95,6 @@ pub fn unpack_envelope(fields: &HashMap<u8, rmpv::Value>) -> Result<Option<Envel
         }
     }
 
-    // Validate app.version format
     let app_ver = envelope
         .get(KEY_APP)
         .and_then(|v| match v {
@@ -114,18 +109,14 @@ pub fn unpack_envelope(fields: &HashMap<u8, rmpv::Value>) -> Result<Option<Envel
         )));
     }
 
-    // Validate the nonce if present; absence is accepted for backward
-    // compatibility with pre-nonce peers (the caller's dedup layer logs
-    // these once per session).
-    if let Some(v) = envelope.get(KEY_NONCE) {
-        match v {
-            rmpv::Value::Binary(b) if b.len() == NONCE_BYTES => {}
-            _ => {
-                return Err(LrgpError::InvalidEnvelope(format!(
-                    "KEY_NONCE must be {NONCE_BYTES}-byte binary; got {v:?}"
-                )));
-            }
+    match envelope.get(KEY_NONCE) {
+        Some(rmpv::Value::Binary(b)) if b.len() == NONCE_BYTES => {}
+        Some(v) => {
+            return Err(LrgpError::InvalidEnvelope(format!(
+                "KEY_NONCE must be {NONCE_BYTES}-byte binary; got {v:?}"
+            )));
         }
+        None => unreachable!("KEY_NONCE presence enforced above"),
     }
 
     Ok(Some(envelope))
@@ -297,20 +288,6 @@ mod tests {
             value_as_str(result.get(KEY_COMMAND).unwrap()).unwrap(),
             "challenge"
         );
-    }
-
-    #[test]
-    fn test_unpack_envelope_legacy_rlap() {
-        // Simulate a legacy rlap.v1 message — should still be recognized
-        let mut lxmf = HashMap::new();
-        lxmf.insert(
-            FIELD_CUSTOM_TYPE,
-            rmpv::Value::String("rlap.v1".into()),
-        );
-        let env = pack_envelope("ttt", 1, "challenge", "abc123", None, None);
-        lxmf.insert(FIELD_CUSTOM_META, value_from_map(env));
-        let result = unpack_envelope(&lxmf).unwrap();
-        assert!(result.is_some());
     }
 
     #[test]

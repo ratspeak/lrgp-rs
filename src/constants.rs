@@ -5,8 +5,6 @@ pub const FIELD_FILE_ATTACHMENTS: u8 = 0x05;
 
 /// Protocol marker stored in FIELD_CUSTOM_TYPE.
 pub const PROTOCOL_TYPE: &str = "lrgp.v1";
-/// Legacy markers recognized on inbound messages.
-pub const LEGACY_TYPES: &[&str] = &["rlap.v1", "ratspeak.game"];
 
 /// Size limits (bytes).
 pub const ENVELOPE_MAX_PACKED: usize = 200;

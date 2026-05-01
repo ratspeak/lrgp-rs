@@ -83,9 +83,9 @@ fn main() {
     println!("\n=== Registered Games ===");
     for manifest in router.list_apps() {
         println!(
-            "  {}.{} — {} ({}) genre={:?}",
+            "  {}.{} — {} ({})",
             manifest.app_id, manifest.version, manifest.display_name,
-            manifest.session_type, manifest.genre
+            manifest.session_type
         );
     }
 

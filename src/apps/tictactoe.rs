@@ -5,7 +5,7 @@ use std::sync::Mutex;
 
 use serde_json::Value as JsonValue;
 
-use crate::app_base::{GameManifest, IncomingResult, OutgoingResult, GameApp};
+use crate::app_base::{AppManifest, IncomingResult, OutgoingResult, GameApp};
 use crate::constants::*;
 use crate::envelope::{value_as_str, value_as_u64};
 use crate::session::{Session, SessionStateMachine};
@@ -689,7 +689,7 @@ impl GameApp for TicTacToeApp {
         1
     }
 
-    fn manifest(&self) -> GameManifest {
+    fn manifest(&self) -> AppManifest {
         let mut preferred_delivery = HashMap::new();
         preferred_delivery.insert(CMD_CHALLENGE.into(), "opportunistic".into());
         preferred_delivery.insert(CMD_ACCEPT.into(), "opportunistic".into());
@@ -704,14 +704,13 @@ impl GameApp for TicTacToeApp {
         ttl.insert(STATUS_PENDING.into(), 86400.0);
         ttl.insert(STATUS_ACTIVE.into(), 86400.0);
 
-        GameManifest {
+        AppManifest {
             app_id: "ttt".into(),
             version: 1,
             display_name: "Tic-Tac-Toe".into(),
             icon: "ttt".into(),
             session_type: SESSION_TURN_BASED.into(),
             max_players: 2,
-            min_players: 2,
             validation: VALIDATION_BOTH.into(),
             actions: vec![
                 CMD_CHALLENGE.into(),
@@ -725,8 +724,6 @@ impl GameApp for TicTacToeApp {
             ],
             preferred_delivery,
             ttl,
-            genre: Some("strategy".into()),
-            turn_timeout: None,
         }
     }
 

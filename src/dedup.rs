@@ -32,10 +32,6 @@ pub enum DedupVerdict {
     Fresh,
     /// Duplicate of a prior arrival; caller should drop it silently.
     Replay,
-    /// No nonce in the envelope (legacy pre-nonce peer). Dispatch it, but
-    /// the caller may want to log the peer so stale-fleet sightings are
-    /// observable.
-    LegacyNoNonce,
 }
 
 /// Per-session bounded LRU of `(session_id, nonce)` → last-seen time.
@@ -89,25 +85,25 @@ impl ReplayDedup {
     /// Returns [`DedupVerdict::Replay`] if this envelope's `(session_id,
     /// nonce)` pair was already seen (caller should drop it). Otherwise
     /// the nonce is recorded and [`DedupVerdict::Fresh`] is returned.
-    /// Envelopes without a `KEY_NONCE` field return [`DedupVerdict::LegacyNoNonce`]
-    /// without touching the cache.
     pub fn check(&mut self, envelope: &Envelope) -> DedupVerdict {
         self.check_at(envelope, Instant::now())
     }
 
     /// [`check`](Self::check) with an injected clock for deterministic tests.
+    ///
+    /// Envelope MUST be post-`unpack_envelope` validated; missing/malformed
+    /// fields here are a protocol violation and are dropped as `Replay`.
     pub fn check_at(&mut self, envelope: &Envelope, now: Instant) -> DedupVerdict {
         let nonce = match envelope.get(KEY_NONCE) {
             Some(rmpv::Value::Binary(b)) if b.len() == crate::constants::NONCE_BYTES => b.clone(),
-            Some(_) => return DedupVerdict::LegacyNoNonce, // malformed — envelope::unpack should have caught this
-            None => return DedupVerdict::LegacyNoNonce,
+            _ => return DedupVerdict::Replay,
         };
         let session_id = match envelope.get(KEY_SESSION) {
             Some(rmpv::Value::String(s)) => match s.as_str() {
                 Some(s) => s.to_string(),
-                None => return DedupVerdict::LegacyNoNonce,
+                None => return DedupVerdict::Replay,
             },
-            _ => return DedupVerdict::LegacyNoNonce,
+            _ => return DedupVerdict::Replay,
         };
 
         let cache = self
@@ -182,32 +178,6 @@ mod tests {
         let mut d = ReplayDedup::new();
         assert_eq!(d.check(&env("s1", [0x33; 8])), DedupVerdict::Fresh);
         assert_eq!(d.check(&env("s1", [0x44; 8])), DedupVerdict::Fresh);
-    }
-
-    #[test]
-    fn legacy_envelope_without_nonce_not_replay() {
-        use crate::envelope::{Envelope, value_from_map};
-        let _ = value_from_map;
-        let mut d = ReplayDedup::new();
-        let mut legacy = Envelope::new();
-        legacy.insert(
-            crate::constants::KEY_APP.into(),
-            rmpv::Value::String("ttt.1".into()),
-        );
-        legacy.insert(
-            crate::constants::KEY_COMMAND.into(),
-            rmpv::Value::String("move".into()),
-        );
-        legacy.insert(
-            crate::constants::KEY_SESSION.into(),
-            rmpv::Value::String("s1".into()),
-        );
-        legacy.insert(
-            crate::constants::KEY_PAYLOAD.into(),
-            rmpv::Value::Map(vec![]),
-        );
-        assert_eq!(d.check(&legacy), DedupVerdict::LegacyNoNonce);
-        assert_eq!(d.check(&legacy), DedupVerdict::LegacyNoNonce);
     }
 
     #[test]

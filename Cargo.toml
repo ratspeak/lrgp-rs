@@ -9,6 +9,12 @@ repository = "https://github.com/ratspeak/lrgp-rs"
 keywords = ["reticulum", "lxmf", "gaming", "mesh", "off-grid"]
 categories = ["network-programming", "encoding", "game-development"]
 
+[features]
+default = []
+# Exposes the per-app `force_coin` test hooks for deterministic vector
+# generation outside the crate. Never enable in production builds.
+test-helpers = []
+
 [dependencies]
 rmp-serde = "1"
 rmpv = "1"
@@ -19,6 +25,7 @@ thiserror = "2"
 tracing = "0.1"
 rand = "0.8"
 hex = "0.4"
+cozy-chess = "0.3.4"
 
 [dev-dependencies]
 tracing-subscriber = "0.3"

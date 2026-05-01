@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::app_base::{GameApp, GameManifest, IncomingResult, OutgoingResult};
+use crate::app_base::{GameApp, AppManifest, IncomingResult, OutgoingResult};
 use crate::constants::*;
 use crate::envelope::{self, Envelope};
 use crate::errors::LrgpError;
@@ -29,7 +29,7 @@ impl LrgpRouter {
     }
 
     /// List manifests for all registered games.
-    pub fn list_apps(&self) -> Vec<GameManifest> {
+    pub fn list_apps(&self) -> Vec<AppManifest> {
         let apps = self.apps.lock().unwrap();
         apps.values().map(|a| a.manifest()).collect()
     }
@@ -125,21 +125,18 @@ mod tests {
         fn version(&self) -> u32 {
             1
         }
-        fn manifest(&self) -> GameManifest {
-            GameManifest {
+        fn manifest(&self) -> AppManifest {
+            AppManifest {
                 app_id: "mock".into(),
                 version: 1,
                 display_name: "Mock Game".into(),
                 icon: "mock".into(),
                 session_type: SESSION_TURN_BASED.into(),
                 max_players: 2,
-                min_players: 2,
                 validation: VALIDATION_BOTH.into(),
                 actions: vec![CMD_CHALLENGE.into(), CMD_MOVE.into()],
                 preferred_delivery: HashMap::new(),
                 ttl: HashMap::new(),
-                genre: Some("test".into()),
-                turn_timeout: None,
             }
         }
         fn handle_incoming(
@@ -204,7 +201,6 @@ mod tests {
         let apps = router.list_apps();
         assert_eq!(apps.len(), 1);
         assert_eq!(apps[0].app_id, "mock");
-        assert_eq!(apps[0].genre, Some("test".into()));
     }
 
     #[test]
