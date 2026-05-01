@@ -1,4 +1,4 @@
-# LRGP Specification v0.2
+# LRGP Specification v0.3
 
 **Lightweight Reticulum Gaming Protocol**
 
@@ -25,14 +25,6 @@ LRGP uses two LXMF custom extension fields:
 
 All fields are serialized via **msgpack** (not JSON).
 
-### Legacy Markers
-
-Implementations MUST also recognize the following legacy markers on inbound messages:
-- `"rlap.v1"` — prior protocol version
-- `"ratspeak.game"` — legacy v0
-
-All outbound messages MUST use `"lrgp.v1"`.
-
 ---
 
 ## 3. Envelope Schema
@@ -44,7 +36,8 @@ The envelope is a msgpack dict stored in `fields[0xFD]`:
     "a": "<game_id>.<version>",    # e.g. "ttt.1"
     "c": "<command>",              # e.g. "move"
     "s": "<session_id>",          # 16-char hex (8 random bytes)
-    "p": { <payload> }            # game-specific, short keys
+    "p": { <payload> },           # game-specific, short keys
+    "n": <8 bytes>                # CSPRNG replay-dedup nonce (msgpack bin8)
 }
 ```
 
@@ -52,11 +45,27 @@ All keys are single characters to minimize wire size. The `game_id` and `version
 
 ### Required Fields
 
-All four keys (`a`, `c`, `s`, `p`) MUST be present in every envelope.
+All five keys (`a`, `c`, `s`, `p`, `n`) MUST be present in every envelope. msgpack maps are unordered by spec, so implementations MUST NOT rely on a specific key ordering when comparing envelopes byte-for-byte.
 
 ### Session ID
 
 Session IDs are 8 random bytes encoded as 16 hexadecimal characters. The challenger generates the session ID.
+
+### Nonce
+
+The `n` field is exactly 8 bytes of CSPRNG output, encoded as msgpack `bin8`. It is freshly generated for every outbound envelope and used by receivers for replay deduplication (see Section 3.1).
+
+### 3.1 Replay Protection
+
+Receivers MUST run each decoded envelope through a per-session bounded LRU before dispatch. The cache is keyed by `(session_id, nonce)` and bounded by:
+
+| Constant | Value | Description |
+|---|---|---|
+| `NONCE_BYTES` | 8 | nonce length |
+| `DEDUP_CACHE_PER_SESSION` | 512 | max entries per session |
+| `DEDUP_TTL_SECONDS` | 600 | per-entry TTL (10 min) |
+
+A `Fresh` verdict means the envelope has not been seen in the cache TTL window — dispatch normally and record the nonce. `Replay` means the `(session_id, nonce)` pair is already present — drop the envelope silently. Implementations SHOULD drop the per-session cache when a session reaches a terminal state (`completed` / `declined` / `expired`).
 
 ---
 
@@ -230,13 +239,10 @@ Each game declares a manifest:
     "icon": "<string>",
     "session_type": "turn_based" | "real_time" | "round_based" | "single_round",
     "max_players": 2,
-    "min_players": 2,
     "validation": "sender" | "receiver" | "both",
     "actions": [<list of command strings>],
     "preferred_delivery": {<command: method>},
-    "ttl": {"pending": <seconds>, "active": <seconds>},
-    "genre": "<optional string>",
-    "turn_timeout": <optional seconds>
+    "ttl": {"pending": <seconds>, "active": <seconds>}
 }
 ```
 
@@ -252,15 +258,7 @@ Most LRGP actions fit in a single packet. For larger data:
 
 ---
 
-## 14. Backward Compatibility
-
-Messages with `fields[0xFB] = "rlap.v1"` or `"ratspeak.game"` are legacy. Implementations MUST recognize them on inbound and process normally.
-
-All outbound messages MUST use `"lrgp.v1"`.
-
----
-
-## 15. Cross-Client Adoption Levels
+## 14. Cross-Client Adoption Levels
 
 | Level | Description |
 |-------|-------------|
@@ -272,13 +270,13 @@ Any LXMF client achieves "None" level by default — fallback text appears as a 
 
 ---
 
-## 16. Serialization
+## 15. Serialization
 
 All LRGP data MUST be serialized with msgpack. JSON is NOT supported on the wire. This is a hard constraint — every byte matters on LoRa links.
 
 ---
 
-## 17. Session Storage Schema
+## 16. Session Storage Schema
 
 ### game_sessions
 
@@ -329,3 +327,46 @@ TicTacToe (`ttt.1`) is the built-in reference game demonstrating LRGP.
 | `t` | str | move, accept | Hash of player whose turn it is next |
 | `x` | str | move | Terminal status: `""`, `"win"`, `"draw"` |
 | `w` | str | move | Winner's hash (only when `x == "win"`) |
+
+---
+
+## B. Chess Reference Game
+
+Chess (`chess.1`) is the built-in chess implementation. App ID `"chess"`, version `1`, session type `turn_based`, validation `both`. White is selected by a coin flip when the responder accepts; the responder communicates the White-player hash back via the `w` key in the ACCEPT payload.
+
+### Wire Format Principles
+
+- **UCI moves only.** Every move is a UCI string (`e2e4`, `e7e8q`). FEN, SAN, and board snapshots are never transmitted.
+- **State by replay.** Each peer reconstructs the current position by replaying the UCI history on the starting FEN. Both peers do this independently (validation = `both`); a divergence is a protocol error.
+- **Terminal reasons are 2-3 char codes.** Keeps move envelopes well under the 200-byte budget.
+- **Threefold repetition and the fifty-move rule are claim-based.** A peer must explicitly send `draw_offer` with the appropriate reason; the rule is not auto-detected mid-game.
+
+### Payload Schema
+
+| Key | Type | Used In | Description |
+|-----|------|---------|-------------|
+| `m` | str | move | UCI move (`e2e4`, `e7e8q` for promotions) |
+| `n` | int | move | Ply counter, 0-based (0 = White's first move) |
+| `x` | str | move | Terminal status: `""`, `"win"`, `"draw"` |
+| `r` | str | move, draw_offer | Terminal reason (see codes below) or claim reason on `draw_offer` |
+| `w` | str | move (terminal=win), accept | Winner identity hash (move) OR White-player identity hash (accept) — context-dependent on `c` |
+
+The `w` key reuses the same character in two payload contexts. Receivers MUST disambiguate by looking at the message command (`accept` → White-player; `move` with `x="win"` → winner).
+
+### Terminal Reason Codes
+
+| Code | Meaning |
+|------|---------|
+| `cm` | Checkmate |
+| `sm` | Stalemate |
+| `ins` | Insufficient material |
+| `3fr` | Threefold repetition (claimed) |
+| `50m` | Fifty-move rule (claimed) |
+| `rsn` | Resignation |
+| `agr` | Draw by agreement |
+
+A move that delivers checkmate carries `x="win"`, `r="cm"`, and `w` = the mating player's hash. A claim-based draw is sent as `draw_offer` with `r` set to the claim reason; the opponent responds with `draw_accept` (which transitions the session to `completed` with terminal=`draw`).
+
+### Engine Notes
+
+The reference Rust implementation uses [cozy-chess](https://crates.io/crates/cozy-chess); the reference Python implementation uses [python-chess](https://pypi.org/project/chess/). Any chess library that implements legal-move generation, checkmate / stalemate / insufficient-material detection, and threefold / fifty-move-rule predicates can be substituted as long as it produces canonical UCI strings.
