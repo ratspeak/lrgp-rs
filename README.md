@@ -92,4 +92,4 @@ See [SPEC.md](SPEC.md) for the full protocol specification.
 
 ## License
 
-AGPL-3.0 — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
