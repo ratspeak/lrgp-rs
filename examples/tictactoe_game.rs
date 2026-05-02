@@ -37,7 +37,9 @@ fn main() {
     println!("Fallback: {fallback}");
 
     // Player A receives accept
-    let result = router.dispatch_incoming(&accept_env, player_b, player_a).unwrap();
+    let result = router
+        .dispatch_incoming(&accept_env, player_b, player_a)
+        .unwrap();
     if let Some(emit) = &result.emit {
         println!("Event: {:?}", emit.get("type"));
     }
@@ -67,7 +69,11 @@ fn main() {
         println!("Fallback: {fallback}");
 
         // Other player receives
-        let other = if *player == player_a { player_b } else { player_a };
+        let other = if *player == player_a {
+            player_b
+        } else {
+            player_a
+        };
         let result = router.dispatch_incoming(&move_env, player, other).unwrap();
 
         if let Some(emit) = &result.emit {
@@ -84,8 +90,7 @@ fn main() {
     for manifest in router.list_apps() {
         println!(
             "  {}.{} — {} ({})",
-            manifest.app_id, manifest.version, manifest.display_name,
-            manifest.session_type
+            manifest.app_id, manifest.version, manifest.display_name, manifest.session_type
         );
     }
 

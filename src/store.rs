@@ -1,4 +1,4 @@
-/// LRGP game store — SQLite persistence for game sessions and action history.
+//! LRGP game store — SQLite persistence for game sessions and action history.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -106,6 +106,7 @@ impl LrgpStore {
     // ──── Sessions ────
 
     /// Save a new session.
+    #[allow(clippy::too_many_arguments)] // SQL row constructor — every column is load-bearing.
     pub fn save_session(
         &self,
         session_id: &str,
@@ -187,7 +188,8 @@ impl LrgpStore {
             params.push(Box::new(updates[key].clone()));
         }
 
-        let params_ref: Vec<&dyn rusqlite::types::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        let params_ref: Vec<&dyn rusqlite::types::ToSql> =
+            params.iter().map(|p| p.as_ref()).collect();
         conn.execute(&sql, params_ref.as_slice())
             .map_err(|e| LrgpError::Store(format!("update_session error: {e}")))?;
 
@@ -262,26 +264,22 @@ impl LrgpStore {
             .prepare(&sql)
             .map_err(|e| LrgpError::Store(format!("list_sessions prepare error: {e}")))?;
 
-        let params_ref: Vec<&dyn rusqlite::types::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        let params_ref: Vec<&dyn rusqlite::types::ToSql> =
+            params.iter().map(|p| p.as_ref()).collect();
         let rows = stmt
             .query_map(params_ref.as_slice(), |row| Ok(session_from_row(row)))
             .map_err(|e| LrgpError::Store(format!("list_sessions query error: {e}")))?;
 
         let mut sessions = Vec::new();
         for row in rows {
-            sessions.push(
-                row.map_err(|e| LrgpError::Store(format!("list_sessions row error: {e}")))?,
-            );
+            sessions
+                .push(row.map_err(|e| LrgpError::Store(format!("list_sessions row error: {e}")))?);
         }
         Ok(sessions)
     }
 
     /// Delete a session and its actions.
-    pub fn delete_session(
-        &self,
-        session_id: &str,
-        identity_id: &str,
-    ) -> Result<(), LrgpError> {
+    pub fn delete_session(&self, session_id: &str, identity_id: &str) -> Result<(), LrgpError> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
             "DELETE FROM game_actions WHERE session_id = ?1 AND identity_id = ?2",
@@ -361,11 +359,7 @@ impl LrgpStore {
     }
 
     /// Get the next action number for a session.
-    pub fn next_action_num(
-        &self,
-        session_id: &str,
-        identity_id: &str,
-    ) -> Result<i64, LrgpError> {
+    pub fn next_action_num(&self, session_id: &str, identity_id: &str) -> Result<i64, LrgpError> {
         let conn = self.conn.lock().unwrap();
         let max: Option<i64> = conn
             .query_row(
@@ -380,11 +374,7 @@ impl LrgpStore {
     }
 
     /// Delete all actions for a session.
-    pub fn delete_actions(
-        &self,
-        session_id: &str,
-        identity_id: &str,
-    ) -> Result<(), LrgpError> {
+    pub fn delete_actions(&self, session_id: &str, identity_id: &str) -> Result<(), LrgpError> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
             "DELETE FROM game_actions WHERE session_id = ?1 AND identity_id = ?2",

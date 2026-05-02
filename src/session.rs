@@ -1,4 +1,4 @@
-/// LRGP game session state machine and lifecycle.
+//! LRGP game session state machine and lifecycle.
 
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -105,10 +105,7 @@ impl SessionStateMachine {
         now_override: Option<f64>,
     ) -> bool {
         let status = session.status.as_str();
-        if matches!(
-            status,
-            STATUS_COMPLETED | STATUS_EXPIRED | STATUS_DECLINED
-        ) {
+        if matches!(status, STATUS_COMPLETED | STATUS_EXPIRED | STATUS_DECLINED) {
             return false;
         }
 
@@ -146,7 +143,10 @@ impl SessionStateMachine {
 
     fn is_same_status_command(current: &str, command: &str) -> bool {
         if current == STATUS_ACTIVE {
-            matches!(command, CMD_MOVE | CMD_DRAW_OFFER | CMD_DRAW_DECLINE | CMD_ERROR)
+            matches!(
+                command,
+                CMD_MOVE | CMD_DRAW_OFFER | CMD_DRAW_DECLINE | CMD_ERROR
+            )
         } else {
             false
         }

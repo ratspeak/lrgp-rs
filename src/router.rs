@@ -1,10 +1,10 @@
-/// LRGP game router — registry for game implementations and dispatch of
-/// incoming/outgoing game messages.
+//! LRGP game router — registry for game implementations and dispatch of
+//! incoming/outgoing game messages.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::app_base::{GameApp, AppManifest, IncomingResult, OutgoingResult};
+use crate::app_base::{AppManifest, GameApp, IncomingResult, OutgoingResult};
 use crate::constants::*;
 use crate::envelope::{self, Envelope};
 use crate::errors::LrgpError;
@@ -97,10 +97,16 @@ impl LrgpRouter {
             .get(app_id)
             .ok_or_else(|| LrgpError::UnknownApp(app_id.to_string()))?;
 
-        let result: OutgoingResult =
-            app.handle_outgoing(session_id, command, payload, identity_id);
+        let result: OutgoingResult = app.handle_outgoing(session_id, command, payload, identity_id);
 
-        let env = envelope::pack_envelope(app_id, version, command, session_id, Some(result.payload), None);
+        let env = envelope::pack_envelope(
+            app_id,
+            version,
+            command,
+            session_id,
+            Some(result.payload),
+            None,
+        );
         Ok((env, result.fallback_text))
     }
 
@@ -350,7 +356,11 @@ mod tests {
         store: Arc<Mutex<HashMap<String, Session>>>,
     }
     impl SnapshotMock {
-        fn new() -> Self { Self { store: Arc::new(Mutex::new(HashMap::new())) } }
+        fn new() -> Self {
+            Self {
+                store: Arc::new(Mutex::new(HashMap::new())),
+            }
+        }
         fn put(&self, session_id: &str, status: &str) {
             let s = Session {
                 session_id: session_id.to_string(),
@@ -373,34 +383,84 @@ mod tests {
         }
     }
     impl GameApp for SnapshotMock {
-        fn app_id(&self) -> &str { "snap" }
-        fn version(&self) -> u32 { 1 }
+        fn app_id(&self) -> &str {
+            "snap"
+        }
+        fn version(&self) -> u32 {
+            1
+        }
         fn manifest(&self) -> AppManifest {
             AppManifest {
-                app_id: "snap".into(), version: 1,
-                display_name: "Snap".into(), icon: "".into(),
-                session_type: SESSION_TURN_BASED.into(), max_players: 2,
+                app_id: "snap".into(),
+                version: 1,
+                display_name: "Snap".into(),
+                icon: "".into(),
+                session_type: SESSION_TURN_BASED.into(),
+                max_players: 2,
                 validation: VALIDATION_BOTH.into(),
-                actions: vec![], preferred_delivery: HashMap::new(), ttl: HashMap::new(),
+                actions: vec![],
+                preferred_delivery: HashMap::new(),
+                ttl: HashMap::new(),
             }
         }
-        fn handle_incoming(&self, _: &str, _: &str, _: &HashMap<String, rmpv::Value>, _: &str, _: &str) -> IncomingResult {
-            IncomingResult { session: None, emit: None, error: None }
+        fn handle_incoming(
+            &self,
+            _: &str,
+            _: &str,
+            _: &HashMap<String, rmpv::Value>,
+            _: &str,
+            _: &str,
+        ) -> IncomingResult {
+            IncomingResult {
+                session: None,
+                emit: None,
+                error: None,
+            }
         }
-        fn handle_outgoing(&self, _: &str, _: &str, _: &HashMap<String, rmpv::Value>, _: &str) -> OutgoingResult {
-            OutgoingResult { payload: HashMap::new(), fallback_text: String::new() }
+        fn handle_outgoing(
+            &self,
+            _: &str,
+            _: &str,
+            _: &HashMap<String, rmpv::Value>,
+            _: &str,
+        ) -> OutgoingResult {
+            OutgoingResult {
+                payload: HashMap::new(),
+                fallback_text: String::new(),
+            }
         }
-        fn validate_action(&self, _: &str, _: &str, _: &HashMap<String, rmpv::Value>, _: &str) -> (bool, Option<String>) { (true, None) }
-        fn get_session_state(&self, _: &str, _: &str) -> HashMap<String, JsonValue> { HashMap::new() }
-        fn render_fallback(&self, _: &str, _: &HashMap<String, rmpv::Value>) -> String { String::new() }
+        fn validate_action(
+            &self,
+            _: &str,
+            _: &str,
+            _: &HashMap<String, rmpv::Value>,
+            _: &str,
+        ) -> (bool, Option<String>) {
+            (true, None)
+        }
+        fn get_session_state(&self, _: &str, _: &str) -> HashMap<String, JsonValue> {
+            HashMap::new()
+        }
+        fn render_fallback(&self, _: &str, _: &HashMap<String, rmpv::Value>) -> String {
+            String::new()
+        }
         fn snapshot_session(&self, session_id: &str, _identity_id: &str) -> Option<Session> {
             self.store.lock().unwrap().get(session_id).cloned()
         }
-        fn rollback_session(&self, session_id: &str, _identity_id: &str, snapshot: Option<Session>) {
+        fn rollback_session(
+            &self,
+            session_id: &str,
+            _identity_id: &str,
+            snapshot: Option<Session>,
+        ) {
             let mut store = self.store.lock().unwrap();
             match snapshot {
-                Some(s) => { store.insert(session_id.to_string(), s); }
-                None => { store.remove(session_id); }
+                Some(s) => {
+                    store.insert(session_id.to_string(), s);
+                }
+                None => {
+                    store.remove(session_id);
+                }
             }
         }
     }
@@ -419,7 +479,9 @@ mod tests {
         assert_eq!(mock.get("g1").unwrap().status, "completed");
 
         // Roll back — state returns to "active".
-        router.rollback_outgoing("snap", "g1", "local", snap).unwrap();
+        router
+            .rollback_outgoing("snap", "g1", "local", snap)
+            .unwrap();
         assert_eq!(mock.get("g1").unwrap().status, "active");
     }
 
@@ -432,7 +494,9 @@ mod tests {
 
         // Pretend the dispatch created g1 (no prior snapshot). Passing None
         // tells rollback_session to delete the fresh session.
-        router.rollback_outgoing("snap", "g1", "local", None).unwrap();
+        router
+            .rollback_outgoing("snap", "g1", "local", None)
+            .unwrap();
         assert!(mock.get("g1").is_none());
     }
 }

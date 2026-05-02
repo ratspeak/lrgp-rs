@@ -1,10 +1,10 @@
-pub mod constants;
-pub mod errors;
-pub mod envelope;
-pub mod dedup;
-pub mod session;
 pub mod app_base;
+pub mod apps;
+pub mod constants;
+pub mod dedup;
+pub mod envelope;
+pub mod errors;
 pub mod router;
+pub mod session;
 pub mod store;
 pub mod transport;
-pub mod apps;

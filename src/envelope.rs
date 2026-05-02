@@ -1,4 +1,4 @@
-/// LRGP envelope packing, unpacking, and validation.
+//! LRGP envelope packing, unpacking, and validation.
 
 use std::collections::HashMap;
 
@@ -30,7 +30,10 @@ pub fn pack_envelope(
     nonce: Option<[u8; NONCE_BYTES]>,
 ) -> Envelope {
     let mut env = Envelope::new();
-    env.insert(KEY_APP.into(), rmpv::Value::String(format!("{app_id}.{version}").into()));
+    env.insert(
+        KEY_APP.into(),
+        rmpv::Value::String(format!("{app_id}.{version}").into()),
+    );
     env.insert(KEY_COMMAND.into(), rmpv::Value::String(command.into()));
     env.insert(KEY_SESSION.into(), rmpv::Value::String(session_id.into()));
     env.insert(
@@ -60,10 +63,7 @@ pub fn validate_envelope_size(envelope: &Envelope) -> Result<usize, LrgpError> {
 /// Returns `{0xFB: "lrgp.v1", 0xFD: envelope}` as a HashMap<u8, ...>.
 pub fn pack_lxmf_fields(envelope: &Envelope) -> HashMap<u8, rmpv::Value> {
     let mut fields = HashMap::new();
-    fields.insert(
-        FIELD_CUSTOM_TYPE,
-        rmpv::Value::String(PROTOCOL_TYPE.into()),
-    );
+    fields.insert(FIELD_CUSTOM_TYPE, rmpv::Value::String(PROTOCOL_TYPE.into()));
     fields.insert(FIELD_CUSTOM_META, value_from_map(envelope.clone()));
     fields
 }
@@ -217,10 +217,7 @@ mod tests {
     fn test_pack_unpack_roundtrip() {
         let mut payload = HashMap::new();
         payload.insert("i".to_string(), rmpv::Value::Integer(4.into()));
-        payload.insert(
-            "b".to_string(),
-            rmpv::Value::String("____X____".into()),
-        );
+        payload.insert("b".to_string(), rmpv::Value::String("____X____".into()));
 
         let env = pack_envelope("ttt", 1, "move", "a1b2c3d4e5f6g7h8", Some(payload), None);
 
@@ -293,10 +290,7 @@ mod tests {
     #[test]
     fn test_unpack_envelope_missing_key() {
         let mut lxmf = HashMap::new();
-        lxmf.insert(
-            FIELD_CUSTOM_TYPE,
-            rmpv::Value::String(PROTOCOL_TYPE.into()),
-        );
+        lxmf.insert(FIELD_CUSTOM_TYPE, rmpv::Value::String(PROTOCOL_TYPE.into()));
         // FIELD_CUSTOM_META has a map missing required keys
         let bad_map = rmpv::Value::Map(vec![(
             rmpv::Value::String("a".into()),

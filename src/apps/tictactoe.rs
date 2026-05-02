@@ -1,11 +1,11 @@
-/// LRGP TicTacToe — built-in turn-based game with both-side validation.
+//! LRGP TicTacToe — built-in turn-based game with both-side validation.
 
 use std::collections::HashMap;
 use std::sync::Mutex;
 
 use serde_json::Value as JsonValue;
 
-use crate::app_base::{AppManifest, IncomingResult, OutgoingResult, GameApp};
+use crate::app_base::{AppManifest, GameApp, IncomingResult, OutgoingResult};
 use crate::constants::*;
 use crate::envelope::{value_as_str, value_as_u64};
 use crate::session::{Session, SessionStateMachine};
@@ -13,9 +13,14 @@ use crate::session::{Session, SessionStateMachine};
 const EMPTY_BOARD: &str = "_________";
 
 const WIN_LINES: [(usize, usize, usize); 8] = [
-    (0, 1, 2), (3, 4, 5), (6, 7, 8), // rows
-    (0, 3, 6), (1, 4, 7), (2, 5, 8), // columns
-    (0, 4, 8), (2, 4, 6),             // diagonals
+    (0, 1, 2),
+    (3, 4, 5),
+    (6, 7, 8), // rows
+    (0, 3, 6),
+    (1, 4, 7),
+    (2, 5, 8), // columns
+    (0, 4, 8),
+    (2, 4, 6), // diagonals
 ];
 
 fn check_winner(board: &str) -> Option<char> {
@@ -54,7 +59,12 @@ fn error_result(code: &str, msg: &str) -> IncomingResult {
     }
 }
 
-fn emit_event(event_type: &str, session_id: &str, app_id: &str, from: &str) -> HashMap<String, JsonValue> {
+fn emit_event(
+    event_type: &str,
+    session_id: &str,
+    app_id: &str,
+    from: &str,
+) -> HashMap<String, JsonValue> {
     let mut m = HashMap::new();
     m.insert("type".into(), JsonValue::String(event_type.into()));
     m.insert("session_id".into(), JsonValue::String(session_id.into()));
@@ -73,10 +83,6 @@ fn meta_str(meta: &HashMap<String, JsonValue>, key: &str) -> String {
 
 fn meta_i64(meta: &HashMap<String, JsonValue>, key: &str) -> i64 {
     meta.get(key).and_then(|v| v.as_i64()).unwrap_or(0)
-}
-
-fn meta_bool(meta: &HashMap<String, JsonValue>, key: &str) -> bool {
-    meta.get(key).and_then(|v| v.as_bool()).unwrap_or(false)
 }
 
 /// The Tic-Tac-Toe LRGP game.
@@ -164,16 +170,20 @@ impl TicTacToeApp {
 
         let board = payload
             .get("b")
-            .and_then(|v| value_as_str(v))
+            .and_then(value_as_str)
             .unwrap_or(EMPTY_BOARD);
         let first_turn = meta_str(&session.metadata, "first_turn");
         let turn = payload
             .get("t")
-            .and_then(|v| value_as_str(v))
+            .and_then(value_as_str)
             .unwrap_or(&first_turn);
 
-        session.metadata.insert("board".into(), JsonValue::String(board.to_string()));
-        session.metadata.insert("turn".into(), JsonValue::String(turn.to_string()));
+        session
+            .metadata
+            .insert("board".into(), JsonValue::String(board.to_string()));
+        session
+            .metadata
+            .insert("turn".into(), JsonValue::String(turn.to_string()));
         session.unread = 1;
         self.save_session(&session);
 
@@ -229,25 +239,38 @@ impl TicTacToeApp {
                 error: Some({
                     let mut m = HashMap::new();
                     m.insert("code".into(), JsonValue::String(ERR_INVALID_MOVE.into()));
-                    m.insert("msg".into(), JsonValue::String(err_msg.unwrap_or_default().into()));
+                    m.insert("msg".into(), JsonValue::String(err_msg.unwrap_or_default()));
                     m.insert("ref".into(), JsonValue::String(CMD_MOVE.into()));
                     m
                 }),
             };
         }
 
-        let board = payload.get("b").and_then(|v| value_as_str(v)).unwrap_or("");
-        let move_num = payload.get("n").and_then(|v| value_as_u64(v)).unwrap_or(0);
-        let turn = payload.get("t").and_then(|v| value_as_str(v)).unwrap_or("");
-        let terminal = payload.get("x").and_then(|v| value_as_str(v)).unwrap_or("");
-        let winner = payload.get("w").and_then(|v| value_as_str(v)).unwrap_or("");
+        let board = payload.get("b").and_then(value_as_str).unwrap_or("");
+        let move_num = payload.get("n").and_then(value_as_u64).unwrap_or(0);
+        let turn = payload.get("t").and_then(value_as_str).unwrap_or("");
+        let terminal = payload.get("x").and_then(value_as_str).unwrap_or("");
+        let winner = payload.get("w").and_then(value_as_str).unwrap_or("");
 
-        session.metadata.insert("board".into(), JsonValue::String(board.to_string()));
-        session.metadata.insert("move_count".into(), JsonValue::Number((move_num as i64).into()));
-        session.metadata.insert("turn".into(), JsonValue::String(turn.to_string()));
-        session.metadata.insert("terminal".into(), JsonValue::String(terminal.to_string()));
-        session.metadata.insert("winner".into(), JsonValue::String(winner.to_string()));
-        session.metadata.insert("draw_offered".into(), JsonValue::Bool(false));
+        session
+            .metadata
+            .insert("board".into(), JsonValue::String(board.to_string()));
+        session.metadata.insert(
+            "move_count".into(),
+            JsonValue::Number((move_num as i64).into()),
+        );
+        session
+            .metadata
+            .insert("turn".into(), JsonValue::String(turn.to_string()));
+        session
+            .metadata
+            .insert("terminal".into(), JsonValue::String(terminal.to_string()));
+        session
+            .metadata
+            .insert("winner".into(), JsonValue::String(winner.to_string()));
+        session
+            .metadata
+            .insert("draw_offered".into(), JsonValue::Bool(false));
 
         let _ = SessionStateMachine::apply_command(&mut session, CMD_MOVE, !terminal.is_empty());
         session.unread = 1;
@@ -259,7 +282,10 @@ impl TicTacToeApp {
             .iter()
             .map(|(k, v)| (k.clone(), rmpv_to_json(v)))
             .collect();
-        emit.insert("payload".into(), JsonValue::Object(payload_json.into_iter().collect()));
+        emit.insert(
+            "payload".into(),
+            JsonValue::Object(payload_json.into_iter().collect()),
+        );
 
         IncomingResult {
             session: Some(session_to_json(&session)),
@@ -280,14 +306,18 @@ impl TicTacToeApp {
         };
 
         let _ = SessionStateMachine::apply_command(&mut session, CMD_RESIGN, false);
-        session.metadata.insert("terminal".into(), JsonValue::String("resign".into()));
+        session
+            .metadata
+            .insert("terminal".into(), JsonValue::String("resign".into()));
         let first_turn = meta_str(&session.metadata, "first_turn");
         let winner = if sender_hash == first_turn {
             identity_id.to_string()
         } else {
             first_turn
         };
-        session.metadata.insert("winner".into(), JsonValue::String(winner));
+        session
+            .metadata
+            .insert("winner".into(), JsonValue::String(winner));
         session.unread = 1;
         self.save_session(&session);
 
@@ -309,7 +339,9 @@ impl TicTacToeApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        session.metadata.insert("draw_offered".into(), JsonValue::Bool(true));
+        session
+            .metadata
+            .insert("draw_offered".into(), JsonValue::Bool(true));
         session.unread = 1;
         self.save_session(&session);
 
@@ -332,8 +364,12 @@ impl TicTacToeApp {
         };
 
         let _ = SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false);
-        session.metadata.insert("terminal".into(), JsonValue::String("draw".into()));
-        session.metadata.insert("draw_offered".into(), JsonValue::Bool(false));
+        session
+            .metadata
+            .insert("terminal".into(), JsonValue::String("draw".into()));
+        session
+            .metadata
+            .insert("draw_offered".into(), JsonValue::Bool(false));
         session.unread = 1;
         self.save_session(&session);
 
@@ -355,7 +391,9 @@ impl TicTacToeApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        session.metadata.insert("draw_offered".into(), JsonValue::Bool(false));
+        session
+            .metadata
+            .insert("draw_offered".into(), JsonValue::Bool(false));
         session.unread = 1;
         self.save_session(&session);
 
@@ -397,7 +435,7 @@ impl TicTacToeApp {
                 return OutgoingResult {
                     payload: HashMap::new(),
                     fallback_text: "[LRGP TTT] Challenge accepted".into(),
-                }
+                };
             }
         };
 
@@ -408,8 +446,12 @@ impl TicTacToeApp {
         } else {
             first_turn
         };
-        session.metadata.insert("board".into(), JsonValue::String(EMPTY_BOARD.into()));
-        session.metadata.insert("turn".into(), JsonValue::String(first.clone()));
+        session
+            .metadata
+            .insert("board".into(), JsonValue::String(EMPTY_BOARD.into()));
+        session
+            .metadata
+            .insert("turn".into(), JsonValue::String(first.clone()));
         self.save_session(&session);
 
         let mut payload = HashMap::new();
@@ -445,13 +487,13 @@ impl TicTacToeApp {
                 return OutgoingResult {
                     payload: payload.clone(),
                     fallback_text: self.render_fallback_inner(CMD_MOVE, payload),
-                }
+                };
             }
         };
 
         let meta = &session.metadata;
         let old_board = meta_str(meta, "board");
-        let index = payload.get("i").and_then(|v| value_as_u64(v)).unwrap_or(0) as usize;
+        let index = payload.get("i").and_then(value_as_u64).unwrap_or(0) as usize;
         let move_num = (meta_i64(meta, "move_count") + 1) as u64;
         let marker = marker_for_move(move_num);
 
@@ -483,24 +525,54 @@ impl TicTacToeApp {
 
         let mut enriched = HashMap::new();
         enriched.insert("i".to_string(), rmpv::Value::Integer((index as i64).into()));
-        enriched.insert("b".to_string(), rmpv::Value::String(new_board.clone().into()));
-        enriched.insert("n".to_string(), rmpv::Value::Integer((move_num as i64).into()));
-        enriched.insert("t".to_string(), rmpv::Value::String(next_turn.clone().into()));
-        enriched.insert("x".to_string(), rmpv::Value::String(terminal.clone().into()));
+        enriched.insert(
+            "b".to_string(),
+            rmpv::Value::String(new_board.clone().into()),
+        );
+        enriched.insert(
+            "n".to_string(),
+            rmpv::Value::Integer((move_num as i64).into()),
+        );
+        enriched.insert(
+            "t".to_string(),
+            rmpv::Value::String(next_turn.clone().into()),
+        );
+        enriched.insert(
+            "x".to_string(),
+            rmpv::Value::String(terminal.clone().into()),
+        );
         if terminal == "win" {
-            enriched.insert("w".to_string(), rmpv::Value::String(winner_hash.clone().into()));
+            enriched.insert(
+                "w".to_string(),
+                rmpv::Value::String(winner_hash.clone().into()),
+            );
         }
 
         // Update local session
-        session.metadata.insert("board".into(), JsonValue::String(new_board));
-        session.metadata.insert("move_count".into(), JsonValue::Number((move_num as i64).into()));
-        session.metadata.insert("turn".into(), JsonValue::String(next_turn));
-        session.metadata.insert("terminal".into(), JsonValue::String(terminal.clone()));
+        session
+            .metadata
+            .insert("board".into(), JsonValue::String(new_board));
+        session.metadata.insert(
+            "move_count".into(),
+            JsonValue::Number((move_num as i64).into()),
+        );
+        session
+            .metadata
+            .insert("turn".into(), JsonValue::String(next_turn));
+        session
+            .metadata
+            .insert("terminal".into(), JsonValue::String(terminal.clone()));
         session.metadata.insert(
             "winner".into(),
-            JsonValue::String(if terminal == "win" { winner_hash } else { String::new() }),
+            JsonValue::String(if terminal == "win" {
+                winner_hash
+            } else {
+                String::new()
+            }),
         );
-        session.metadata.insert("draw_offered".into(), JsonValue::Bool(false));
+        session
+            .metadata
+            .insert("draw_offered".into(), JsonValue::Bool(false));
         let _ = SessionStateMachine::apply_command(&mut session, CMD_MOVE, !terminal.is_empty());
         self.save_session(&session);
 
@@ -514,8 +586,13 @@ impl TicTacToeApp {
     fn handle_resign_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
         if let Some(mut session) = self.get_session(session_id, identity_id) {
             let _ = SessionStateMachine::apply_command(&mut session, CMD_RESIGN, false);
-            session.metadata.insert("terminal".into(), JsonValue::String("resign".into()));
-            session.metadata.insert("winner".into(), JsonValue::String(session.contact_hash.clone()));
+            session
+                .metadata
+                .insert("terminal".into(), JsonValue::String("resign".into()));
+            session.metadata.insert(
+                "winner".into(),
+                JsonValue::String(session.contact_hash.clone()),
+            );
             self.save_session(&session);
         }
         OutgoingResult {
@@ -527,8 +604,12 @@ impl TicTacToeApp {
     fn handle_draw_accept_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
         if let Some(mut session) = self.get_session(session_id, identity_id) {
             let _ = SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false);
-            session.metadata.insert("terminal".into(), JsonValue::String("draw".into()));
-            session.metadata.insert("draw_offered".into(), JsonValue::Bool(false));
+            session
+                .metadata
+                .insert("terminal".into(), JsonValue::String("draw".into()));
+            session
+                .metadata
+                .insert("draw_offered".into(), JsonValue::Bool(false));
             self.save_session(&session);
         }
         OutgoingResult {
@@ -561,13 +642,13 @@ impl TicTacToeApp {
             return (false, Some("Not your turn".into()));
         }
 
-        let index = match payload.get("i").and_then(|v| value_as_u64(v)) {
+        let index = match payload.get("i").and_then(value_as_u64) {
             Some(i) if i <= 8 => i as usize,
-            _ => return (false, Some(format!("Invalid cell index"))),
+            _ => return (false, Some("Invalid cell index".into())),
         };
-        let board_str = payload.get("b").and_then(|v| value_as_str(v)).unwrap_or("");
-        let move_num = payload.get("n").and_then(|v| value_as_u64(v)).unwrap_or(0);
-        let terminal = payload.get("x").and_then(|v| value_as_str(v)).unwrap_or("");
+        let board_str = payload.get("b").and_then(value_as_str).unwrap_or("");
+        let move_num = payload.get("n").and_then(value_as_u64).unwrap_or(0);
+        let terminal = payload.get("x").and_then(value_as_str).unwrap_or("");
 
         // 3. Cell must be empty
         let old_board = meta_str(meta, "board");
@@ -586,7 +667,9 @@ impl TicTacToeApp {
         if board_str != expected {
             return (
                 false,
-                Some(format!("Board mismatch: expected {expected}, got {board_str}")),
+                Some(format!(
+                    "Board mismatch: expected {expected}, got {board_str}"
+                )),
             );
         }
 
@@ -625,7 +708,7 @@ impl TicTacToeApp {
         }
 
         // 7. Turn must be opponent (or empty if terminal)
-        let next_turn = payload.get("t").and_then(|v| value_as_str(v)).unwrap_or("");
+        let next_turn = payload.get("t").and_then(value_as_str).unwrap_or("");
         if !terminal.is_empty() {
             if !next_turn.is_empty() {
                 return (false, Some("Turn should be empty on terminal move".into()));
@@ -640,21 +723,25 @@ impl TicTacToeApp {
         (true, None)
     }
 
-    fn render_fallback_inner(&self, command: &str, payload: &HashMap<String, rmpv::Value>) -> String {
+    fn render_fallback_inner(
+        &self,
+        command: &str,
+        payload: &HashMap<String, rmpv::Value>,
+    ) -> String {
         match command {
             CMD_CHALLENGE => "[LRGP TTT] Sent a challenge!".into(),
             CMD_ACCEPT => "[LRGP TTT] Challenge accepted".into(),
             CMD_DECLINE => "[LRGP TTT] Challenge declined".into(),
             CMD_MOVE => {
-                let terminal = payload.get("x").and_then(|v| value_as_str(v)).unwrap_or("");
+                let terminal = payload.get("x").and_then(value_as_str).unwrap_or("");
                 if terminal == "win" {
-                    let n = payload.get("n").and_then(|v| value_as_u64(v)).unwrap_or(0);
+                    let n = payload.get("n").and_then(value_as_u64).unwrap_or(0);
                     let marker = marker_for_move(n);
                     format!("[LRGP TTT] {marker} wins!")
                 } else if terminal == "draw" {
                     "[LRGP TTT] Game drawn!".into()
                 } else {
-                    let n = payload.get("n").and_then(|v| value_as_u64(v));
+                    let n = payload.get("n").and_then(value_as_u64);
                     match n {
                         Some(n) => format!("[LRGP TTT] Move {n}"),
                         None => "[LRGP TTT] Move ?".into(),
@@ -666,7 +753,10 @@ impl TicTacToeApp {
             CMD_DRAW_ACCEPT => "[LRGP TTT] Draw accepted".into(),
             CMD_DRAW_DECLINE => "[LRGP TTT] Draw declined".into(),
             CMD_ERROR => {
-                let msg = payload.get("msg").and_then(|v| value_as_str(v)).unwrap_or("Unknown");
+                let msg = payload
+                    .get("msg")
+                    .and_then(value_as_str)
+                    .unwrap_or("Unknown");
                 format!("[LRGP TTT] Error: {msg}")
             }
             other => format!("[LRGP TTT] {other}"),
@@ -736,7 +826,9 @@ impl GameApp for TicTacToeApp {
         identity_id: &str,
     ) -> IncomingResult {
         match command {
-            CMD_CHALLENGE => self.handle_challenge_in(session_id, payload, sender_hash, identity_id),
+            CMD_CHALLENGE => {
+                self.handle_challenge_in(session_id, payload, sender_hash, identity_id)
+            }
             CMD_ACCEPT => self.handle_accept_in(session_id, payload, sender_hash, identity_id),
             CMD_DECLINE => self.handle_decline_in(session_id, sender_hash, identity_id),
             CMD_MOVE => self.handle_move_in(session_id, payload, sender_hash, identity_id),
@@ -801,7 +893,7 @@ impl GameApp for TicTacToeApp {
                     (true, None)
                 } else {
                     (false, Some("Session not found".into()))
-                }
+                };
             }
         };
 
@@ -845,18 +937,39 @@ impl GameApp for TicTacToeApp {
 
 fn session_to_json(session: &Session) -> HashMap<String, JsonValue> {
     let mut m = HashMap::new();
-    m.insert("session_id".into(), JsonValue::String(session.session_id.clone()));
-    m.insert("identity_id".into(), JsonValue::String(session.identity_id.clone()));
+    m.insert(
+        "session_id".into(),
+        JsonValue::String(session.session_id.clone()),
+    );
+    m.insert(
+        "identity_id".into(),
+        JsonValue::String(session.identity_id.clone()),
+    );
     m.insert("app_id".into(), JsonValue::String(session.app_id.clone()));
-    m.insert("app_version".into(), JsonValue::Number((session.app_version as i64).into()));
-    m.insert("contact_hash".into(), JsonValue::String(session.contact_hash.clone()));
-    m.insert("initiator".into(), JsonValue::String(session.initiator.clone()));
+    m.insert(
+        "app_version".into(),
+        JsonValue::Number((session.app_version as i64).into()),
+    );
+    m.insert(
+        "contact_hash".into(),
+        JsonValue::String(session.contact_hash.clone()),
+    );
+    m.insert(
+        "initiator".into(),
+        JsonValue::String(session.initiator.clone()),
+    );
     m.insert("status".into(), JsonValue::String(session.status.clone()));
-    m.insert("metadata".into(), JsonValue::Object(session.metadata.clone().into_iter().collect()));
+    m.insert(
+        "metadata".into(),
+        JsonValue::Object(session.metadata.clone().into_iter().collect()),
+    );
     m.insert("unread".into(), JsonValue::Number(session.unread.into()));
     m.insert("created_at".into(), serde_json::json!(session.created_at));
     m.insert("updated_at".into(), serde_json::json!(session.updated_at));
-    m.insert("last_action_at".into(), serde_json::json!(session.last_action_at));
+    m.insert(
+        "last_action_at".into(),
+        serde_json::json!(session.last_action_at),
+    );
     m
 }
 
@@ -917,7 +1030,13 @@ mod tests {
         }
 
         // Responder receives challenge (incoming)
-        let result = app.handle_incoming("sess1", CMD_CHALLENGE, &HashMap::new(), challenger, responder);
+        let result = app.handle_incoming(
+            "sess1",
+            CMD_CHALLENGE,
+            &HashMap::new(),
+            challenger,
+            responder,
+        );
         assert!(result.error.is_none());
 
         (app, "sess1".to_string())
@@ -1015,7 +1134,10 @@ mod tests {
         app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), x);
         {
             let mut sessions = app.sessions.lock().unwrap();
-            sessions.get_mut(&("g1".into(), x.into())).unwrap().contact_hash = o.to_string();
+            sessions
+                .get_mut(&("g1".into(), x.into()))
+                .unwrap()
+                .contact_hash = o.to_string();
         }
         app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), x, o);
         let accept_out = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), o);
@@ -1025,7 +1147,11 @@ mod tests {
         let mut p = HashMap::new();
         p.insert("i".into(), rmpv::Value::Integer(4.into()));
         let m1 = app.handle_outgoing("g1", CMD_MOVE, &p, x);
-        assert!(value_as_str(m1.payload.get("x").unwrap()).unwrap().is_empty());
+        assert!(
+            value_as_str(m1.payload.get("x").unwrap())
+                .unwrap()
+                .is_empty()
+        );
         app.handle_incoming("g1", CMD_MOVE, &m1.payload, x, o);
 
         // Move 2: O plays top-left (0)
@@ -1077,7 +1203,10 @@ mod tests {
         app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), "alice");
         {
             let mut sessions = app.sessions.lock().unwrap();
-            sessions.get_mut(&("g1".into(), "alice".into())).unwrap().contact_hash = "bob".to_string();
+            sessions
+                .get_mut(&("g1".into(), "alice".into()))
+                .unwrap()
+                .contact_hash = "bob".to_string();
         }
         app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
         let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), "bob");

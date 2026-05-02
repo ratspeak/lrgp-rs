@@ -40,7 +40,10 @@ fn main() {
     let mut pending = Session::new("expiry-demo");
     pending.last_action_at = 1000.0; // far in the past
     let expired = SessionStateMachine::check_expiry(&mut pending, None, Some(1_000_000.0));
-    println!("Pending session expired: {expired} (status={})", pending.status);
+    println!(
+        "Pending session expired: {expired} (status={})",
+        pending.status
+    );
 
     // Demonstrate decline
     println!("\n--- Decline demo ---");

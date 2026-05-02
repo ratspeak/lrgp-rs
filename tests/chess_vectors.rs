@@ -6,9 +6,7 @@
 //! spec, so we test that decoding any implementation's bytes yields the
 //! expected field values — not that re-packing produces byte-identical bytes.
 
-use lrgp::envelope::{
-    map_from_value, unpack_from_bytes, value_as_str, value_as_u64, Envelope,
-};
+use lrgp::envelope::{Envelope, map_from_value, unpack_from_bytes, value_as_str, value_as_u64};
 
 fn decode(bytes: &[u8]) -> Envelope {
     unpack_from_bytes(bytes).expect("decode succeeds")

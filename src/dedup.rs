@@ -50,7 +50,9 @@ struct SessionCache {
 
 impl SessionCache {
     fn new() -> Self {
-        Self { entries: Vec::new() }
+        Self {
+            entries: Vec::new(),
+        }
     }
 
     fn prune_expired(&mut self, now: Instant, ttl: Duration) {
@@ -188,7 +190,10 @@ mod tests {
             n[0] = i;
             assert_eq!(d.check(&env("s1", n)), DedupVerdict::Fresh);
         }
-        assert_eq!(d.check(&env("s1", [9, 0, 0, 0, 0, 0, 0, 0])), DedupVerdict::Fresh);
+        assert_eq!(
+            d.check(&env("s1", [9, 0, 0, 0, 0, 0, 0, 0])),
+            DedupVerdict::Fresh
+        );
         // Nonce 0 was the oldest; it should have been evicted and now be
         // treated as fresh on retransmit.
         assert_eq!(d.check(&env("s1", [0; 8])), DedupVerdict::Fresh);

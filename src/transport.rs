@@ -1,8 +1,8 @@
-/// LRGP transport bridge — converts between LRGP envelopes and LXMF field bytes.
-///
-/// This module handles the raw byte-level conversion needed to embed LRGP
-/// game envelopes inside LXMF messages and extract them on receipt.
-/// It is pure data transformation — no I/O.
+//! LRGP transport bridge — converts between LRGP envelopes and LXMF field bytes.
+//!
+//! This module handles the raw byte-level conversion needed to embed LRGP
+//! game envelopes inside LXMF messages and extract them on receipt.
+//! It is pure data transformation — no I/O.
 
 use std::collections::HashMap;
 

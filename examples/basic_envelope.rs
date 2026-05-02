@@ -16,7 +16,11 @@ fn main() {
 
     // Serialize to msgpack bytes
     let bytes = pack_to_bytes(&env).unwrap();
-    println!("Wire bytes ({} bytes): {}", bytes.len(), hex::encode(&bytes));
+    println!(
+        "Wire bytes ({} bytes): {}",
+        bytes.len(),
+        hex::encode(&bytes)
+    );
 
     // Deserialize back
     let recovered = unpack_from_bytes(&bytes).unwrap();
@@ -41,7 +45,10 @@ fn main() {
 
     // Extract back from LXMF fields
     let extracted = unpack_envelope(&lxmf_fields).unwrap().unwrap();
-    println!("Extracted command: {}", value_as_str(extracted.get(KEY_COMMAND).unwrap()).unwrap());
+    println!(
+        "Extracted command: {}",
+        value_as_str(extracted.get(KEY_COMMAND).unwrap()).unwrap()
+    );
 
     println!("\nAll operations successful.");
 }
