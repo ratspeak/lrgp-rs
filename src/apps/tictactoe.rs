@@ -485,22 +485,51 @@ impl TicTacToeApp {
             Some(s) => s,
             None => {
                 return OutgoingResult {
-                    payload: payload.clone(),
-                    fallback_text: self.render_fallback_inner(CMD_MOVE, payload),
+                    payload: HashMap::new(),
+                    fallback_text: "[LRGP TTT] Session not found".into(),
                 };
             }
         };
 
         let meta = &session.metadata;
+        if session.status != STATUS_ACTIVE {
+            return OutgoingResult {
+                payload: HashMap::new(),
+                fallback_text: format!("[LRGP TTT] Session is not active ({})", session.status),
+            };
+        }
+
+        let current_turn = meta_str(meta, "turn");
+        if !current_turn.is_empty() && current_turn != identity_id {
+            return OutgoingResult {
+                payload: HashMap::new(),
+                fallback_text: "[LRGP TTT] Not your turn".into(),
+            };
+        }
+
         let old_board = meta_str(meta, "board");
-        let index = payload.get("i").and_then(value_as_u64).unwrap_or(0) as usize;
+        let index = match payload.get("i").and_then(value_as_u64) {
+            Some(i) if i <= 8 => i as usize,
+            _ => {
+                return OutgoingResult {
+                    payload: HashMap::new(),
+                    fallback_text: "[LRGP TTT] Invalid cell index".into(),
+                };
+            }
+        };
+        let old_chars: Vec<char> = old_board.chars().collect();
+        if index >= old_chars.len() || old_chars[index] != '_' {
+            return OutgoingResult {
+                payload: HashMap::new(),
+                fallback_text: format!("[LRGP TTT] Cell {index} is already occupied"),
+            };
+        }
+
         let move_num = (meta_i64(meta, "move_count") + 1) as u64;
         let marker = marker_for_move(move_num);
 
-        let mut board_chars: Vec<char> = old_board.chars().collect();
-        if index < board_chars.len() {
-            board_chars[index] = marker;
-        }
+        let mut board_chars = old_chars;
+        board_chars[index] = marker;
         let new_board: String = board_chars.into_iter().collect();
 
         let winner = check_winner(&new_board);
@@ -933,6 +962,21 @@ impl GameApp for TicTacToeApp {
             _ => "opportunistic".into(),
         }
     }
+
+    fn snapshot_session(&self, session_id: &str, identity_id: &str) -> Option<Session> {
+        self.get_session(session_id, identity_id)
+    }
+
+    fn rollback_session(&self, session_id: &str, identity_id: &str, snapshot: Option<Session>) {
+        match snapshot {
+            Some(snap) => self.save_session(&snap),
+            None => {
+                if let Ok(mut sessions) = self.sessions.lock() {
+                    sessions.remove(&(session_id.to_string(), identity_id.to_string()));
+                }
+            }
+        }
+    }
 }
 
 fn session_to_json(session: &Session) -> HashMap<String, JsonValue> {
@@ -1193,6 +1237,104 @@ mod tests {
 
         let sess = app.get_session("g1", x).unwrap();
         assert_eq!(sess.status, STATUS_COMPLETED);
+    }
+
+    #[test]
+    fn test_out_of_turn_move_rejected() {
+        let app = TicTacToeApp::new();
+        app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), "alice");
+        {
+            let mut sessions = app.sessions.lock().unwrap();
+            sessions
+                .get_mut(&("g1".into(), "alice".into()))
+                .unwrap()
+                .contact_hash = "bob".to_string();
+        }
+        app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
+        let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), "bob");
+        app.handle_incoming("g1", CMD_ACCEPT, &accept.payload, "bob", "alice");
+
+        let before = app.get_session("g1", "bob").unwrap();
+        let mut p = HashMap::new();
+        p.insert("i".into(), rmpv::Value::Integer(0.into()));
+        let out = app.handle_outgoing("g1", CMD_MOVE, &p, "bob");
+
+        assert_eq!(out.fallback_text, "[LRGP TTT] Not your turn");
+        assert!(out.payload.is_empty());
+        let after = app.get_session("g1", "bob").unwrap();
+        assert_eq!(after.metadata["board"], before.metadata["board"]);
+        assert_eq!(after.metadata["turn"], before.metadata["turn"]);
+    }
+
+    #[test]
+    fn test_occupied_cell_move_rejected() {
+        let app = TicTacToeApp::new();
+        app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), "alice");
+        {
+            let mut sessions = app.sessions.lock().unwrap();
+            sessions
+                .get_mut(&("g1".into(), "alice".into()))
+                .unwrap()
+                .contact_hash = "bob".to_string();
+        }
+        app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
+        let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), "bob");
+        app.handle_incoming("g1", CMD_ACCEPT, &accept.payload, "bob", "alice");
+
+        let mut p = HashMap::new();
+        p.insert("i".into(), rmpv::Value::Integer(4.into()));
+        let m1 = app.handle_outgoing("g1", CMD_MOVE, &p, "alice");
+        app.handle_incoming("g1", CMD_MOVE, &m1.payload, "alice", "bob");
+
+        let before = app.get_session("g1", "bob").unwrap();
+        let mut occupied = HashMap::new();
+        occupied.insert("i".into(), rmpv::Value::Integer(4.into()));
+        let out = app.handle_outgoing("g1", CMD_MOVE, &occupied, "bob");
+
+        assert!(out.fallback_text.contains("already occupied"));
+        assert!(out.payload.is_empty());
+        let after = app.get_session("g1", "bob").unwrap();
+        assert_eq!(after.metadata["board"], before.metadata["board"]);
+        assert_eq!(after.metadata["turn"], before.metadata["turn"]);
+    }
+
+    #[test]
+    fn test_rollback_restores_existing_session() {
+        let app = TicTacToeApp::new();
+        app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), "alice");
+        {
+            let mut sessions = app.sessions.lock().unwrap();
+            sessions
+                .get_mut(&("g1".into(), "alice".into()))
+                .unwrap()
+                .contact_hash = "bob".to_string();
+        }
+        app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
+        let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), "bob");
+        app.handle_incoming("g1", CMD_ACCEPT, &accept.payload, "bob", "alice");
+
+        let snap = app.snapshot_session("g1", "alice");
+        let mut p = HashMap::new();
+        p.insert("i".into(), rmpv::Value::Integer(4.into()));
+        app.handle_outgoing("g1", CMD_MOVE, &p, "alice");
+        let after_move = app.get_session("g1", "alice").unwrap();
+        assert_ne!(after_move.metadata["board"], "_________");
+
+        app.rollback_session("g1", "alice", snap);
+        let restored = app.get_session("g1", "alice").unwrap();
+        assert_eq!(restored.metadata["board"], "_________");
+        assert_eq!(restored.metadata["turn"], "alice");
+    }
+
+    #[test]
+    fn test_rollback_removes_new_session() {
+        let app = TicTacToeApp::new();
+        let snap = app.snapshot_session("new_sid", "alice");
+        app.handle_outgoing("new_sid", CMD_CHALLENGE, &HashMap::new(), "alice");
+        assert!(app.get_session("new_sid", "alice").is_some());
+
+        app.rollback_session("new_sid", "alice", snap);
+        assert!(app.get_session("new_sid", "alice").is_none());
     }
 
     #[test]

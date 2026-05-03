@@ -854,8 +854,8 @@ impl ChessApp {
             Some(s) => s,
             None => {
                 return OutgoingResult {
-                    payload: payload.clone(),
-                    fallback_text: self.render_fallback_inner(CMD_MOVE, payload),
+                    payload: HashMap::new(),
+                    fallback_text: "[LRGP Chess] Session not found".into(),
                 };
             }
         };
@@ -1958,6 +1958,18 @@ mod tests {
         p.insert(KEY_MOVE.into(), rmpv::Value::String("e7e5".into()));
         let out = app.handle_outgoing("g1", CMD_MOVE, &p, "bob");
         assert_eq!(out.fallback_text, "[LRGP Chess] Not your turn");
+        assert!(out.payload.is_empty());
+    }
+
+    #[test]
+    fn test_unknown_session_move_rejected() {
+        let app = ChessApp::new();
+        let mut p = HashMap::new();
+        p.insert(KEY_MOVE.into(), rmpv::Value::String("e2e4".into()));
+
+        let out = app.handle_outgoing("missing", CMD_MOVE, &p, "alice");
+
+        assert_eq!(out.fallback_text, "[LRGP Chess] Session not found");
         assert!(out.payload.is_empty());
     }
 
