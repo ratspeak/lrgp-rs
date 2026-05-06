@@ -164,6 +164,10 @@ impl TicTacToeApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
+        if session.contact_hash.is_empty() {
+            session.contact_hash = sender_hash.to_string();
+        }
+
         if let Err(e) = SessionStateMachine::apply_command(&mut session, CMD_ACCEPT, false) {
             return error_result(ERR_PROTOCOL_ERROR, &e.to_string());
         }
@@ -500,7 +504,7 @@ impl TicTacToeApp {
         }
 
         let current_turn = meta_str(meta, "turn");
-        if !current_turn.is_empty() && current_turn != identity_id {
+        if current_turn != identity_id {
             return OutgoingResult {
                 payload: HashMap::new(),
                 fallback_text: "[LRGP TTT] Not your turn".into(),
@@ -541,13 +545,16 @@ impl TicTacToeApp {
             ("draw".to_string(), String::new(), String::new())
         } else {
             let first_turn = meta_str(meta, "first_turn");
-            let mut nt = if marker == 'O' {
-                first_turn
-            } else {
+            let nt = if identity_id == first_turn {
                 session.contact_hash.clone()
+            } else {
+                first_turn
             };
-            if nt == identity_id {
-                nt = session.contact_hash.clone();
+            if nt.is_empty() {
+                return OutgoingResult {
+                    payload: HashMap::new(),
+                    fallback_text: "[LRGP TTT] Opponent unknown".into(),
+                };
             }
             (String::new(), String::new(), nt)
         };
@@ -747,6 +754,23 @@ impl TicTacToeApp {
                 false,
                 Some("Turn cannot be the sender after their own move".into()),
             );
+        } else if next_turn.is_empty() {
+            return (false, Some("Turn is required on non-terminal move".into()));
+        } else {
+            let first_turn = meta_str(meta, "first_turn");
+            let expected_next_turn = if sender_hash == first_turn {
+                session.identity_id.clone()
+            } else {
+                first_turn
+            };
+            if !expected_next_turn.is_empty() && next_turn != expected_next_turn {
+                return (
+                    false,
+                    Some(format!(
+                        "Turn mismatch: expected {expected_next_turn}, got {next_turn}"
+                    )),
+                );
+            }
         }
 
         (true, None)
@@ -1152,6 +1176,47 @@ mod tests {
 
         let sess = app.get_session("s1", "alice").unwrap();
         assert_eq!(sess.status, STATUS_ACTIVE);
+    }
+
+    #[test]
+    fn test_challenger_first_move_sets_responder_turn_without_seeded_contact() {
+        let app = TicTacToeApp::new();
+        let challenger = "alice";
+        let responder = "bob";
+
+        app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), challenger);
+        app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), challenger, responder);
+        let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), responder);
+        let accept_in =
+            app.handle_incoming("g1", CMD_ACCEPT, &accept.payload, responder, challenger);
+        assert!(accept_in.error.is_none());
+
+        let challenger_session = app.get_session("g1", challenger).unwrap();
+        assert_eq!(challenger_session.contact_hash, responder);
+        assert_eq!(meta_str(&challenger_session.metadata, "turn"), challenger);
+
+        let mut p = HashMap::new();
+        p.insert("i".into(), rmpv::Value::Integer(4.into()));
+        let move_out = app.handle_outgoing("g1", CMD_MOVE, &p, challenger);
+        assert!(!move_out.payload.is_empty());
+        assert_eq!(
+            value_as_str(move_out.payload.get("t").unwrap()).unwrap(),
+            responder
+        );
+
+        let move_in = app.handle_incoming("g1", CMD_MOVE, &move_out.payload, challenger, responder);
+        assert!(move_in.error.is_none());
+        let responder_session = app.get_session("g1", responder).unwrap();
+        assert_eq!(meta_str(&responder_session.metadata, "turn"), responder);
+
+        let mut p = HashMap::new();
+        p.insert("i".into(), rmpv::Value::Integer(0.into()));
+        let responder_move = app.handle_outgoing("g1", CMD_MOVE, &p, responder);
+        assert!(!responder_move.payload.is_empty());
+        assert_eq!(
+            value_as_str(responder_move.payload.get("t").unwrap()).unwrap(),
+            challenger
+        );
     }
 
     #[test]
