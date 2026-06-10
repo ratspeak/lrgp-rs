@@ -492,7 +492,6 @@ impl ChessApp {
             .and_then(|v| value_as_str(v))
             .unwrap_or("")
             .to_string();
-        let ply = payload.get(KEY_PLY).and_then(value_as_u64).unwrap_or(0);
 
         let mut moves = meta_string_list(&session.metadata, "moves");
         moves.push(uci.clone());
@@ -522,9 +521,10 @@ impl ChessApp {
         session
             .metadata
             .insert("moves".into(), string_list_value(&moves));
-        session
-            .metadata
-            .insert("move_count".into(), JsonValue::Number((ply as i64).into()));
+        session.metadata.insert(
+            "move_count".into(),
+            JsonValue::Number((moves.len() as i64).into()),
+        );
         session.metadata.insert(
             "turn".into(),
             JsonValue::String(if terminal.is_empty() {
@@ -926,8 +926,9 @@ impl ChessApp {
         }
 
         board.play(mv);
-        moves.push(uci.clone());
+        // SPEC: `n` is 0-based (0 = White's first move) — count before push.
         let ply = moves.len() as u64;
+        moves.push(uci.clone());
 
         let (terminal, reason) = detect_auto_terminal(&board);
         let winner_hash = if terminal == "win" {
@@ -968,9 +969,10 @@ impl ChessApp {
         session
             .metadata
             .insert("moves".into(), string_list_value(&moves));
-        session
-            .metadata
-            .insert("move_count".into(), JsonValue::Number((ply as i64).into()));
+        session.metadata.insert(
+            "move_count".into(),
+            JsonValue::Number((moves.len() as i64).into()),
+        );
         session
             .metadata
             .insert("turn".into(), JsonValue::String(next_turn));
@@ -1150,7 +1152,9 @@ impl ChessApp {
             .unwrap_or("")
             .to_string();
 
-        let expected_ply = (meta_i64(meta, "move_count") + 1) as u64;
+        // SPEC: `n` is 0-based, so the next move's ply equals the count of
+        // moves already applied.
+        let expected_ply = meta_i64(meta, "move_count") as u64;
         if ply != expected_ply {
             return (
                 false,
@@ -2019,6 +2023,49 @@ mod tests {
             "terminal-promotion envelope {} bytes (budget ≤150)",
             size
         );
+    }
+
+    /// T1-5: SPEC.md says `n` is 0-based (0 = White's first move). rs
+    /// previously emitted 1-based and required it inbound, breaking move-1
+    /// interop with lrgp-py and contradicting the shared chess_move.bin
+    /// vector (which this encode-side check pins).
+    #[test]
+    fn test_first_move_emits_zero_based_ply() {
+        let _coin = pin_coin(true);
+        let app = ChessApp::new();
+        setup_active(&app, "alice", "bob");
+
+        let out = play_move(&app, "e2e4", "alice", "bob");
+        assert_eq!(value_as_u64(out.payload.get(KEY_PLY).unwrap()).unwrap(), 0);
+
+        let sess_a = app.get_session("g1", "alice").unwrap();
+        let sess_b = app.get_session("g1", "bob").unwrap();
+        assert_eq!(meta_i64(&sess_a.metadata, "move_count"), 1);
+        assert_eq!(meta_i64(&sess_b.metadata, "move_count"), 1);
+
+        let out = play_move(&app, "e7e5", "bob", "alice");
+        assert_eq!(value_as_u64(out.payload.get(KEY_PLY).unwrap()).unwrap(), 1);
+    }
+
+    /// T1-5: a 1-based first move (the old rs emission) must be rejected,
+    /// a 0-based one accepted.
+    #[test]
+    fn test_first_move_ply_base_validation() {
+        let _coin = pin_coin(true);
+        let app = ChessApp::new();
+        setup_active(&app, "alice", "bob");
+
+        let session = app.get_session("g1", "bob").unwrap();
+        let mut p = HashMap::new();
+        p.insert(KEY_MOVE.to_string(), rmpv::Value::String("e2e4".into()));
+        p.insert(KEY_PLY.to_string(), rmpv::Value::Integer(1.into()));
+        let (valid, err) = app.validate_move(&session, &p, "alice");
+        assert!(!valid);
+        assert!(err.unwrap().contains("Ply mismatch"));
+
+        p.insert(KEY_PLY.to_string(), rmpv::Value::Integer(0.into()));
+        let (valid, err) = app.validate_move(&session, &p, "alice");
+        assert!(valid, "0-based first move must validate: {err:?}");
     }
 
     #[test]
