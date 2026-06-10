@@ -1125,8 +1125,13 @@ impl ChessApp {
             );
         }
 
+        // Empty turn on an active session is invalid state — fail closed
+        // (canonical per SPEC; matches lrgp-py).
         let turn = meta_str(meta, "turn");
-        if !turn.is_empty() && turn != sender_hash {
+        if turn.is_empty() {
+            return (false, Some("Turn is required before moves".into()));
+        }
+        if turn != sender_hash {
             return (false, Some("Not your turn".into()));
         }
 
@@ -2045,6 +2050,27 @@ mod tests {
 
         let out = play_move(&app, "e7e5", "bob", "alice");
         assert_eq!(value_as_u64(out.payload.get(KEY_PLY).unwrap()).unwrap(), 1);
+    }
+
+    /// T1-13: an active session with an empty `turn` is invalid state; a
+    /// move against it must fail closed (canonical per SPEC, matches lrgp-py).
+    #[test]
+    fn test_validate_move_rejects_empty_turn() {
+        let _coin = pin_coin(true);
+        let app = ChessApp::new();
+        setup_active(&app, "alice", "bob");
+
+        let mut session = app.get_session("g1", "bob").unwrap();
+        session
+            .metadata
+            .insert("turn".into(), JsonValue::String("".into()));
+
+        let mut p = HashMap::new();
+        p.insert(KEY_MOVE.to_string(), rmpv::Value::String("e2e4".into()));
+        p.insert(KEY_PLY.to_string(), rmpv::Value::Integer(0.into()));
+        let (valid, err) = app.validate_move(&session, &p, "alice");
+        assert!(!valid);
+        assert!(err.unwrap().contains("Turn is required"));
     }
 
     /// T1-5: a 1-based first move (the old rs emission) must be rejected,

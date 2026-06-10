@@ -161,6 +161,12 @@ challenge --> accept --> action* --> end
 | `receiver` | Receiver validates on receipt; rejects invalid | Sends `error` action |
 | `both` | Both sides validate independently | Receiver sends `error` if validation disagrees |
 
+For turn-based games, a move against an `active` session whose stored `turn`
+is unset MUST be rejected: every accept handler assigns `turn`, so an empty
+value means corrupted or desynchronized state, and validators fail closed
+rather than guess. Claimed terminal state (`x`/`r`/`w`) is never trusted —
+receivers recompute it from their replayed local state and reject mismatches.
+
 ---
 
 ## 9. Error Actions
@@ -339,7 +345,7 @@ Chess (`chess.1`) is the built-in chess implementation. App ID `"chess"`, versio
 - **UCI moves only.** Every move is a UCI string (`e2e4`, `e7e8q`). FEN, SAN, and board snapshots are never transmitted.
 - **State by replay.** Each peer reconstructs the current position by replaying the UCI history on the starting FEN. Both peers do this independently (validation = `both`); a divergence is a protocol error.
 - **Terminal reasons are 2-3 char codes.** Keeps move envelopes well under the 200-byte budget.
-- **Threefold repetition and the fifty-move rule are claim-based.** A peer must explicitly send `draw_offer` with the appropriate reason; the rule is not auto-detected mid-game.
+- **Threefold repetition and the fifty-move rule are claim-based.** A peer must explicitly send `draw_offer` with the appropriate reason (`3fr`/`50m`); the rule is not auto-detected mid-game. The receiver verifies the claim against its replayed position: a valid claim terminates the game as a draw immediately (FIDE semantics — no `draw_accept` round-trip), while an invalid claim degrades to a plain draw offer. The claimant pre-terminates its local session on a valid claim.
 
 ### Payload Schema
 
@@ -365,7 +371,7 @@ The `w` key reuses the same character in two payload contexts. Receivers MUST di
 | `rsn` | Resignation |
 | `agr` | Draw by agreement |
 
-A move that delivers checkmate carries `x="win"`, `r="cm"`, and `w` = the mating player's hash. A claim-based draw is sent as `draw_offer` with `r` set to the claim reason; the opponent responds with `draw_accept` (which transitions the session to `completed` with terminal=`draw`).
+A move that delivers checkmate carries `x="win"`, `r="cm"`, and `w` = the mating player's hash. A claim-based draw is sent as `draw_offer` with `r` set to the claim reason; a receiver that verifies the claim against its replayed position transitions directly to `completed` with terminal=`draw` (no `draw_accept` round-trip). A plain `draw_offer` (no claim reason, or an invalid claim) still requires `draw_accept`.
 
 ### Engine Notes
 

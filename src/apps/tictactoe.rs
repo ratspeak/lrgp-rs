@@ -672,9 +672,13 @@ impl TicTacToeApp {
             );
         }
 
-        // 2. Must be sender's turn
+        // 2. Must be sender's turn. Empty turn on an active session is
+        // invalid state — fail closed (canonical per SPEC; matches lrgp-py).
         let turn = meta_str(meta, "turn");
-        if !turn.is_empty() && turn != sender_hash {
+        if turn.is_empty() {
+            return (false, Some("Turn is required before moves".into()));
+        }
+        if turn != sender_hash {
             return (false, Some("Not your turn".into()));
         }
 
@@ -1485,5 +1489,29 @@ mod tests {
         let (valid, msg) = app.validate_action("nope", CMD_MOVE, &HashMap::new(), "x");
         assert!(!valid);
         assert!(msg.unwrap().contains("not found"));
+    }
+
+    /// T1-13: an active session with an empty `turn` is invalid state; a
+    /// move against it must fail closed (canonical per SPEC, matches lrgp-py).
+    #[test]
+    fn test_validate_move_rejects_empty_turn() {
+        let app = TicTacToeApp::new();
+        app.handle_outgoing("s1", CMD_CHALLENGE, &HashMap::new(), "alice");
+        app.handle_incoming("s1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
+        let accept = app.handle_outgoing("s1", CMD_ACCEPT, &HashMap::new(), "bob");
+        app.handle_incoming("s1", CMD_ACCEPT, &accept.payload, "bob", "alice");
+
+        let mut session = app.get_session("s1", "alice").unwrap();
+        session
+            .metadata
+            .insert("turn".into(), JsonValue::String("".into()));
+
+        let mut p = HashMap::new();
+        p.insert("i".into(), rmpv::Value::Integer(0.into()));
+        p.insert("b".into(), rmpv::Value::String("X________".into()));
+        p.insert("n".into(), rmpv::Value::Integer(1.into()));
+        let (valid, msg) = app.validate_move(&session, &p, "bob");
+        assert!(!valid);
+        assert!(msg.unwrap().contains("Turn is required"));
     }
 }
