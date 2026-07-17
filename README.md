@@ -98,7 +98,7 @@ See [SPEC.md](SPEC.md) for the full protocol specification.
 
 ## See Also
 
-- [lrgp-py](../lrgp-py) — Python implementation (wire-compatible)
+- [lrgp-py](https://github.com/ratspeak/lrgp-py) — Python implementation (wire-compatible)
 
 ## License
 
