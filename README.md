@@ -20,13 +20,9 @@ LRGP enables turn-based and real-time multiplayer games to run over LoRa radios,
 ## Quick Start
 
 ```rust
-use lrgp::apps::chess::ChessApp;
-use lrgp::apps::tictactoe::TicTacToeApp;
 use lrgp::router::LrgpRouter;
 
-let router = LrgpRouter::new();
-router.register(Box::new(TicTacToeApp::new()));
-router.register(Box::new(ChessApp::new()));
+let router = LrgpRouter::with_builtin_apps();
 
 // List available games
 for game in router.list_apps() {
@@ -72,6 +68,15 @@ impl GameApp for MyGame {
     fn render_fallback(&self, /* ... */) -> String { /* ... */ }
 }
 ```
+
+Games embedded by an application can be registered with
+`LrgpRouter::register`. A game shipped as part of LRGP itself must also be
+added once to `apps::builtin_games()`. Applications using
+`LrgpRouter::with_builtin_apps()` then discover it automatically, without
+maintaining their own concrete registration list. The built-in registry tests
+enforce unique IDs, coherent manifests, lifecycle actions, and valid delivery
+preferences; router tests additionally exercise a third mock game beside the
+standard set.
 
 ## Wire Format
 

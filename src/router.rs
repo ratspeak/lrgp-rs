@@ -29,6 +29,19 @@ impl LrgpRouter {
         }
     }
 
+    /// Create a router containing every game shipped with LRGP.
+    ///
+    /// Applications embedding the standard game set should prefer this over
+    /// registering concrete built-ins themselves. Additional games can still
+    /// be registered normally after construction.
+    pub fn with_builtin_apps() -> Self {
+        let router = Self::new();
+        for app in crate::apps::builtin_games() {
+            router.register(app);
+        }
+        router
+    }
+
     /// Register a game implementation.
     pub fn register(&self, app: Box<dyn GameApp>) {
         let id = app.app_id().to_string();
@@ -39,7 +52,9 @@ impl LrgpRouter {
     /// List manifests for all registered games.
     pub fn list_apps(&self) -> Vec<AppManifest> {
         let apps = self.apps.lock().unwrap();
-        apps.values().map(|a| a.manifest()).collect()
+        let mut manifests: Vec<_> = apps.values().map(|a| a.manifest()).collect();
+        manifests.sort_by(|left, right| left.app_id.cmp(&right.app_id));
+        manifests
     }
 
     /// Execute a callback on a registered game by app_id.
@@ -833,6 +848,46 @@ mod tests {
         let apps = router.list_apps();
         assert_eq!(apps.len(), 1);
         assert_eq!(apps[0].app_id, "mock");
+    }
+
+    #[test]
+    fn builtin_router_accepts_a_third_game_through_generic_paths() {
+        let router = LrgpRouter::with_builtin_apps();
+        let builtin_ids: Vec<_> = router
+            .list_apps()
+            .into_iter()
+            .map(|manifest| manifest.app_id)
+            .collect();
+        router.register(Box::new(MockGame));
+
+        let ids: Vec<_> = router
+            .list_apps()
+            .into_iter()
+            .map(|manifest| manifest.app_id)
+            .collect();
+        assert_eq!(ids.len(), builtin_ids.len() + 1);
+        assert!(ids.windows(2).all(|pair| pair[0] < pair[1]));
+        assert!(ids.iter().any(|id| id == "mock"));
+        for builtin_id in builtin_ids {
+            assert!(ids.contains(&builtin_id));
+        }
+
+        let prepared = router
+            .dispatch_outgoing_to(
+                "mock",
+                1,
+                CMD_CHALLENGE,
+                "0000000000000001",
+                &HashMap::new(),
+                "local",
+                "remote",
+            )
+            .unwrap();
+        let envelope = envelope::validate_envelope(&prepared.envelope).unwrap();
+        assert_eq!(envelope.app_id, "mock");
+        assert_eq!(envelope.command, CMD_CHALLENGE);
+        assert_eq!(prepared.fallback_text, "[LRGP Mock] challenge");
+        assert_eq!(prepared.session_id, "0000000000000001");
     }
 
     #[test]
