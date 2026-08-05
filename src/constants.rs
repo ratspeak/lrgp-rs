@@ -59,13 +59,20 @@ pub const KEY_APP: &str = "a";
 pub const KEY_COMMAND: &str = "c";
 pub const KEY_SESSION: &str = "s";
 pub const KEY_PAYLOAD: &str = "p";
-/// Optional 8-byte per-envelope replay-dedup nonce.
+/// Required 8-byte per-envelope replay-dedup nonce.
 pub const KEY_NONCE: &str = "n";
 
 /// Nonce / replay-dedup sizing.
 pub const NONCE_BYTES: usize = 8;
 pub const DEDUP_CACHE_PER_SESSION: usize = 512;
+/// Maximum number of live per-session nonce caches retained by one router.
+pub const DEDUP_CACHE_SESSIONS: usize = 1024;
 pub const DEDUP_TTL_SECONDS: u64 = 600;
+
+/// Incoming challenge admission limits. Only pending sessions count; active
+/// games are never evicted to make room.
+pub const PENDING_SESSIONS_PER_IDENTITY_MAX: usize = 128;
+pub const PENDING_SESSIONS_PER_PARTICIPANT_MAX: usize = 16;
 
 /// Error payload keys.
 pub const KEY_ERR_CODE: &str = "code";

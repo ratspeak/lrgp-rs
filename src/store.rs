@@ -15,8 +15,6 @@ const ALLOWED_COLUMNS: &[&str] = &[
     "unread",
     "updated_at",
     "last_action_at",
-    "contact_hash",
-    "initiator",
 ];
 
 /// A stored game action.
@@ -105,7 +103,9 @@ impl LrgpStore {
 
     // ──── Sessions ────
 
-    /// Save a new session.
+    /// Save a new session. An existing `(session_id, identity_id)` is an error;
+    /// callers must use the allowlisted update path for mutable state. This
+    /// prevents a retry from silently rebinding the app or remote participant.
     #[allow(clippy::too_many_arguments)] // SQL row constructor — every column is load-bearing.
     pub fn save_session(
         &self,
@@ -127,7 +127,7 @@ impl LrgpStore {
             .map_err(|e| LrgpError::Store(format!("metadata serialization error: {e}")))?;
 
         conn.execute(
-            "INSERT OR REPLACE INTO game_sessions
+            "INSERT INTO game_sessions
              (session_id, identity_id, app_id, app_version, contact_hash, initiator,
               status, metadata, unread, created_at, updated_at, last_action_at)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
@@ -151,7 +151,8 @@ impl LrgpStore {
         Ok(())
     }
 
-    /// Update specific columns of a session (allowlist-validated).
+    /// Update mutable columns of a session (allowlist-validated). Participant
+    /// and initiator bindings are intentionally immutable after insertion.
     pub fn update_session(
         &self,
         session_id: &str,
@@ -280,29 +281,38 @@ impl LrgpStore {
 
     /// Delete a session and its actions.
     pub fn delete_session(&self, session_id: &str, identity_id: &str) -> Result<(), LrgpError> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "DELETE FROM game_actions WHERE session_id = ?1 AND identity_id = ?2",
-            rusqlite::params![session_id, identity_id],
-        )
-        .map_err(|e| LrgpError::Store(format!("delete actions error: {e}")))?;
+        let mut conn = self.conn.lock().unwrap();
+        let transaction = conn
+            .transaction()
+            .map_err(|e| LrgpError::Store(format!("delete transaction error: {e}")))?;
+        transaction
+            .execute(
+                "DELETE FROM game_actions WHERE session_id = ?1 AND identity_id = ?2",
+                rusqlite::params![session_id, identity_id],
+            )
+            .map_err(|e| LrgpError::Store(format!("delete actions error: {e}")))?;
 
-        conn.execute(
-            "DELETE FROM game_sessions WHERE session_id = ?1 AND identity_id = ?2",
-            rusqlite::params![session_id, identity_id],
-        )
-        .map_err(|e| LrgpError::Store(format!("delete session error: {e}")))?;
+        transaction
+            .execute(
+                "DELETE FROM game_sessions WHERE session_id = ?1 AND identity_id = ?2",
+                rusqlite::params![session_id, identity_id],
+            )
+            .map_err(|e| LrgpError::Store(format!("delete session error: {e}")))?;
+        transaction
+            .commit()
+            .map_err(|e| LrgpError::Store(format!("delete commit error: {e}")))?;
 
         Ok(())
     }
 
     // ──── Actions ────
 
-    /// Save a game action.
+    /// Save a game action. Duplicate action numbers are rejected so immutable
+    /// history cannot be silently rewritten.
     pub fn save_action(&self, action: &Action) -> Result<(), LrgpError> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
-            "INSERT OR REPLACE INTO game_actions
+            "INSERT INTO game_actions
              (session_id, identity_id, action_num, command, payload_json, sender, timestamp)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             rusqlite::params![
@@ -439,6 +449,52 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_session_insert_cannot_rebind_or_replace_state() {
+        let store = test_store();
+        store
+            .save_session(
+                "s1",
+                "id1",
+                "ttt",
+                1,
+                "trusted-peer",
+                "id1",
+                "pending",
+                &HashMap::new(),
+                0,
+                1.0,
+                1.0,
+                1.0,
+            )
+            .unwrap();
+
+        assert!(
+            store
+                .save_session(
+                    "s1",
+                    "id1",
+                    "chess",
+                    1,
+                    "attacker",
+                    "attacker",
+                    "completed",
+                    &HashMap::new(),
+                    1,
+                    2.0,
+                    2.0,
+                    2.0,
+                )
+                .is_err()
+        );
+
+        let original = store.get_session("s1", "id1").unwrap().unwrap();
+        assert_eq!(original.app_id, "ttt");
+        assert_eq!(original.contact_hash, "trusted-peer");
+        assert_eq!(original.initiator, "id1");
+        assert_eq!(original.status, "pending");
+    }
+
+    #[test]
     fn test_update_session() {
         let store = test_store();
         store
@@ -491,6 +547,12 @@ mod tests {
         updates.insert("evil_column; DROP TABLE--".into(), "hack".into());
         let result = store.update_session("s1", "id1", &updates);
         assert!(result.is_err());
+
+        for immutable in ["contact_hash", "initiator"] {
+            let mut updates = HashMap::new();
+            updates.insert(immutable.into(), "attacker".into());
+            assert!(store.update_session("s1", "id1", &updates).is_err());
+        }
     }
 
     #[test]
@@ -568,6 +630,35 @@ mod tests {
         assert_eq!(actions.len(), 3);
         assert_eq!(actions[0].action_num, 1);
         assert_eq!(actions[2].action_num, 3);
+    }
+
+    #[test]
+    fn duplicate_action_number_cannot_rewrite_history() {
+        let store = test_store();
+        let original = Action {
+            session_id: "s1".into(),
+            identity_id: "id1".into(),
+            action_num: 1,
+            command: "move".into(),
+            payload_json: "{\"i\":1}".into(),
+            sender: "trusted-peer".into(),
+            timestamp: 1.0,
+        };
+        store.save_action(&original).unwrap();
+
+        let replacement = Action {
+            payload_json: "{\"i\":8}".into(),
+            sender: "attacker".into(),
+            timestamp: 2.0,
+            ..original
+        };
+        assert!(store.save_action(&replacement).is_err());
+
+        let actions = store.list_actions("s1", "id1").unwrap();
+        assert_eq!(actions.len(), 1);
+        assert_eq!(actions[0].payload_json, "{\"i\":1}");
+        assert_eq!(actions[0].sender, "trusted-peer");
+        assert_eq!(actions[0].timestamp, 1.0);
     }
 
     #[test]

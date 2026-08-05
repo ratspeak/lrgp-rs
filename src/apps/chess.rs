@@ -10,7 +10,8 @@ use serde_json::Value as JsonValue;
 
 use crate::app_base::{AppManifest, GameApp, IncomingResult, OutgoingResult};
 use crate::constants::*;
-use crate::envelope::{value_as_str, value_as_u64};
+use crate::envelope::{has_exact_keys, value_as_str, value_as_u64};
+use crate::errors::LrgpError;
 use crate::session::{Session, SessionStateMachine};
 
 const APP_ID: &str = "chess";
@@ -264,10 +265,10 @@ impl ChessApp {
     }
 
     fn get_session(&self, session_id: &str, identity_id: &str) -> Option<Session> {
-        let sessions = self.sessions.lock().unwrap();
-        sessions
-            .get(&(session_id.to_string(), identity_id.to_string()))
-            .cloned()
+        let mut sessions = self.sessions.lock().unwrap();
+        let session = sessions.get_mut(&(session_id.to_string(), identity_id.to_string()))?;
+        SessionStateMachine::check_expiry(session, Some(&Self::ttl_policy()), None);
+        Some(session.clone())
     }
 
     fn save_session(&self, session: &Session) {
@@ -276,6 +277,13 @@ impl ChessApp {
             (session.session_id.clone(), session.identity_id.clone()),
             session.clone(),
         );
+    }
+
+    fn ttl_policy() -> HashMap<String, f64> {
+        let mut ttl = HashMap::new();
+        ttl.insert(STATUS_PENDING.into(), TTL_PENDING);
+        ttl.insert(STATUS_ACTIVE.into(), TTL_ACTIVE);
+        ttl
     }
 
     fn default_metadata() -> HashMap<String, JsonValue> {
@@ -290,11 +298,103 @@ impl ChessApp {
         m.insert("terminal".into(), JsonValue::String("".into()));
         m.insert("terminal_reason".into(), JsonValue::String("".into()));
         m.insert("draw_offered".into(), JsonValue::Bool(false));
+        m.insert("draw_offered_by".into(), JsonValue::String("".into()));
         m.insert("draw_offer_reason".into(), JsonValue::String("".into()));
         m.insert("last_move".into(), JsonValue::String("".into()));
         m.insert("in_check".into(), JsonValue::Bool(false));
         m.insert("legal_moves".into(), JsonValue::Array(vec![]));
         m
+    }
+
+    fn validate_incoming_payload(
+        &self,
+        session_id: &str,
+        command: &str,
+        payload: &HashMap<String, rmpv::Value>,
+        identity_id: &str,
+        sender_hash: &str,
+    ) -> Result<(), String> {
+        match command {
+            CMD_CHALLENGE | CMD_DECLINE | CMD_RESIGN | CMD_DRAW_ACCEPT | CMD_DRAW_DECLINE => {
+                if !payload.is_empty() {
+                    return Err(format!("{command} payload must be empty"));
+                }
+            }
+            CMD_ACCEPT => {
+                if !has_exact_keys(payload, &[KEY_WHITE]) {
+                    return Err("accept payload must contain exactly w".into());
+                }
+                let white = payload
+                    .get(KEY_WHITE)
+                    .and_then(value_as_str)
+                    .ok_or_else(|| "accept w must be a string".to_string())?;
+                if white != identity_id && white != sender_hash {
+                    return Err("accept w is not a bound participant".into());
+                }
+            }
+            CMD_DRAW_OFFER => {
+                if !(payload.is_empty() || has_exact_keys(payload, &[KEY_REASON])) {
+                    return Err("draw_offer payload must be empty or exactly {r}".into());
+                }
+                if let Some(reason) = payload.get(KEY_REASON) {
+                    let reason = value_as_str(reason)
+                        .ok_or_else(|| "draw_offer r must be a string".to_string())?;
+                    if !matches!(reason, R_THREEFOLD | R_FIFTY_MOVE) {
+                        return Err(format!("unsupported draw claim reason '{reason}'"));
+                    }
+                }
+            }
+            CMD_MOVE => {
+                let terminal = payload
+                    .get(KEY_TERMINAL)
+                    .and_then(value_as_str)
+                    .ok_or_else(|| "move x must be a string".to_string())?;
+                let expected: &[&str] = match terminal {
+                    "" => &[KEY_MOVE, KEY_PLY, KEY_TERMINAL],
+                    "win" => &[KEY_MOVE, KEY_PLY, KEY_TERMINAL, KEY_REASON, KEY_WINNER],
+                    "draw" => &[KEY_MOVE, KEY_PLY, KEY_TERMINAL, KEY_REASON],
+                    other => return Err(format!("unsupported terminal marker '{other}'")),
+                };
+                if !has_exact_keys(payload, expected) {
+                    return Err(format!(
+                        "move payload has invalid keys for terminal marker '{terminal}'"
+                    ));
+                }
+                if payload
+                    .get(KEY_MOVE)
+                    .and_then(value_as_str)
+                    .filter(|uci| !uci.is_empty())
+                    .is_none()
+                    || payload.get(KEY_PLY).and_then(value_as_u64).is_none()
+                {
+                    return Err("move payload contains a value with the wrong type".into());
+                }
+                if !terminal.is_empty()
+                    && payload
+                        .get(KEY_REASON)
+                        .and_then(value_as_str)
+                        .filter(|reason| !reason.is_empty())
+                        .is_none()
+                {
+                    return Err("terminal move r must be a non-empty string".into());
+                }
+                if terminal == "win"
+                    && payload
+                        .get(KEY_WINNER)
+                        .and_then(value_as_str)
+                        .filter(|winner| !winner.is_empty())
+                        .is_none()
+                {
+                    return Err("winning move w must be a non-empty string".into());
+                }
+            }
+            CMD_ERROR => {}
+            _ => return Err(format!("unsupported command '{command}'")),
+        }
+        if command != CMD_CHALLENGE && self.get_session(session_id, identity_id).is_none() {
+            return Err("Unknown session".into());
+        }
+        Ok(())
     }
 
     /// Refresh derived session metadata (fen, legal_moves, in_check, draw_offer_reason).
@@ -378,6 +478,12 @@ impl ChessApp {
             .to_string();
         if white_hash.is_empty() {
             return error_result(ERR_PROTOCOL_ERROR, "ACCEPT missing white-player hash");
+        }
+        if white_hash != identity_id && white_hash != sender_hash {
+            return error_result(
+                ERR_PROTOCOL_ERROR,
+                "ACCEPT white-player hash is not one of the bound participants",
+            );
         }
         let my_color = if white_hash == identity_id { "w" } else { "b" };
 
@@ -546,13 +652,15 @@ impl ChessApp {
         session
             .metadata
             .insert("winner".into(), JsonValue::String(winner_hash));
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        session.clear_draw_offer();
 
         Self::refresh_derived(&mut session, &board, &moves);
 
-        let _ = SessionStateMachine::apply_command(&mut session, CMD_MOVE, !terminal.is_empty());
+        if let Err(error) =
+            SessionStateMachine::apply_command(&mut session, CMD_MOVE, !terminal.is_empty())
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
         session.unread = 1;
         self.save_session(&session);
 
@@ -584,7 +692,9 @@ impl ChessApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        let _ = SessionStateMachine::apply_command(&mut session, CMD_RESIGN, false);
+        if let Err(error) = SessionStateMachine::apply_command(&mut session, CMD_RESIGN, false) {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
         session
             .metadata
             .insert("terminal".into(), JsonValue::String("win".into()));
@@ -598,6 +708,7 @@ impl ChessApp {
         session
             .metadata
             .insert("turn".into(), JsonValue::String("".into()));
+        session.clear_draw_offer();
         session.unread = 1;
         self.save_session(&session);
 
@@ -639,7 +750,11 @@ impl ChessApp {
         };
 
         if is_valid_claim {
-            let _ = SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false);
+            if let Err(error) =
+                SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false)
+            {
+                return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+            }
             session
                 .metadata
                 .insert("terminal".into(), JsonValue::String("draw".into()));
@@ -653,6 +768,7 @@ impl ChessApp {
             session
                 .metadata
                 .insert("turn".into(), JsonValue::String("".into()));
+            session.clear_draw_offer();
             session.unread = 1;
             self.save_session(&session);
 
@@ -663,9 +779,14 @@ impl ChessApp {
             };
         }
 
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(true));
+        if session.has_draw_offer() {
+            return error_result(ERR_PROTOCOL_ERROR, "A draw offer is already outstanding");
+        }
+        if let Err(error) = SessionStateMachine::apply_command(&mut session, CMD_DRAW_OFFER, false)
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
+        session.set_draw_offer(sender_hash);
         session.unread = 1;
         self.save_session(&session);
 
@@ -687,7 +808,20 @@ impl ChessApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        let _ = SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false);
+        let Some(offered_by) = session.draw_offered_by() else {
+            return error_result(ERR_PROTOCOL_ERROR, "No draw offer is outstanding");
+        };
+        if offered_by == sender_hash {
+            return error_result(
+                ERR_PROTOCOL_ERROR,
+                "A participant cannot accept its own draw offer",
+            );
+        }
+
+        if let Err(error) = SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false)
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
         session
             .metadata
             .insert("terminal".into(), JsonValue::String("draw".into()));
@@ -695,9 +829,7 @@ impl ChessApp {
             "terminal_reason".into(),
             JsonValue::String(R_AGREEMENT.into()),
         );
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        session.clear_draw_offer();
         session
             .metadata
             .insert("turn".into(), JsonValue::String("".into()));
@@ -722,9 +854,22 @@ impl ChessApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        let Some(offered_by) = session.draw_offered_by() else {
+            return error_result(ERR_PROTOCOL_ERROR, "No draw offer is outstanding");
+        };
+        if offered_by == sender_hash {
+            return error_result(
+                ERR_PROTOCOL_ERROR,
+                "A participant cannot decline its own draw offer",
+            );
+        }
+
+        if let Err(error) =
+            SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false)
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
+        session.clear_draw_offer();
         session.unread = 1;
         self.save_session(&session);
 
@@ -989,9 +1134,7 @@ impl ChessApp {
         session
             .metadata
             .insert("winner".into(), JsonValue::String(winner_hash));
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        session.clear_draw_offer();
 
         Self::refresh_derived(&mut session, &board, &moves);
 
@@ -1021,6 +1164,7 @@ impl ChessApp {
             session
                 .metadata
                 .insert("turn".into(), JsonValue::String("".into()));
+            session.clear_draw_offer();
             self.save_session(&session);
         }
         OutgoingResult {
@@ -1050,6 +1194,7 @@ impl ChessApp {
         }
 
         if let Some(mut session) = self.get_session(session_id, identity_id) {
+            let mut completed_claim = false;
             // On claim, pre-terminate locally so UI reflects immediately.
             if reason == R_THREEFOLD || reason == R_FIFTY_MOVE {
                 let moves = meta_string_list(&session.metadata, "moves");
@@ -1067,7 +1212,13 @@ impl ChessApp {
                     session
                         .metadata
                         .insert("turn".into(), JsonValue::String("".into()));
+                    session.clear_draw_offer();
+                    completed_claim = true;
                 }
+            }
+            if !completed_claim {
+                let _ = SessionStateMachine::apply_command(&mut session, CMD_DRAW_OFFER, false);
+                session.set_draw_offer(identity_id);
             }
             self.save_session(&session);
         }
@@ -1096,9 +1247,7 @@ impl ChessApp {
                 "terminal_reason".into(),
                 JsonValue::String(R_AGREEMENT.into()),
             );
-            session
-                .metadata
-                .insert("draw_offered".into(), JsonValue::Bool(false));
+            session.clear_draw_offer();
             session
                 .metadata
                 .insert("turn".into(), JsonValue::String("".into()));
@@ -1107,6 +1256,19 @@ impl ChessApp {
         OutgoingResult {
             payload: HashMap::new(),
             fallback_text: "[LRGP Chess] Draw accepted".into(),
+        }
+    }
+
+    fn handle_draw_decline_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
+        if let Some(mut session) = self.get_session(session_id, identity_id)
+            && SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false).is_ok()
+        {
+            session.clear_draw_offer();
+            self.save_session(&session);
+        }
+        OutgoingResult {
+            payload: HashMap::new(),
+            fallback_text: "[LRGP Chess] Declined draw offer".into(),
         }
     }
 
@@ -1140,12 +1302,13 @@ impl ChessApp {
             _ => return (false, Some("Missing UCI move".into())),
         };
 
-        let ply = payload.get(KEY_PLY).and_then(value_as_u64).unwrap_or(0);
-        let claimed_terminal = payload
-            .get(KEY_TERMINAL)
-            .and_then(|v| value_as_str(v))
-            .unwrap_or("")
-            .to_string();
+        let Some(ply) = payload.get(KEY_PLY).and_then(value_as_u64) else {
+            return (false, Some("Missing ply index".into()));
+        };
+        let Some(claimed_terminal) = payload.get(KEY_TERMINAL).and_then(value_as_str) else {
+            return (false, Some("Missing terminal marker".into()));
+        };
+        let claimed_terminal = claimed_terminal.to_string();
         let claimed_reason = payload
             .get(KEY_REASON)
             .and_then(|v| value_as_str(v))
@@ -1210,12 +1373,26 @@ impl ChessApp {
                 )),
             );
         }
+        if terminal.is_empty() && !claimed_reason.is_empty() {
+            return (
+                false,
+                Some(format!(
+                    "Reason must be empty on a non-terminal move, got '{claimed_reason}'"
+                )),
+            );
+        }
         if terminal == "win" && claimed_winner != sender_hash {
             return (
                 false,
                 Some(format!(
                     "Winner mismatch: computed='{sender_hash}' claimed='{claimed_winner}'"
                 )),
+            );
+        }
+        if terminal != "win" && !claimed_winner.is_empty() {
+            return (
+                false,
+                Some("Winner must be empty unless the move is a win".into()),
             );
         }
 
@@ -1316,10 +1493,9 @@ impl GameApp for ChessApp {
         preferred_delivery.insert(CMD_DRAW_OFFER.into(), "opportunistic".into());
         preferred_delivery.insert(CMD_DRAW_ACCEPT.into(), "direct".into());
         preferred_delivery.insert(CMD_DRAW_DECLINE.into(), "direct".into());
+        preferred_delivery.insert(CMD_ERROR.into(), "opportunistic".into());
 
-        let mut ttl = HashMap::new();
-        ttl.insert(STATUS_PENDING.into(), TTL_PENDING);
-        ttl.insert(STATUS_ACTIVE.into(), TTL_ACTIVE);
+        let ttl = Self::ttl_policy();
 
         AppManifest {
             app_id: APP_ID.into(),
@@ -1338,6 +1514,7 @@ impl GameApp for ChessApp {
                 CMD_DRAW_OFFER.into(),
                 CMD_DRAW_ACCEPT.into(),
                 CMD_DRAW_DECLINE.into(),
+                CMD_ERROR.into(),
             ],
             preferred_delivery,
             ttl,
@@ -1352,6 +1529,17 @@ impl GameApp for ChessApp {
         sender_hash: &str,
         identity_id: &str,
     ) -> IncomingResult {
+        if command != CMD_ERROR
+            && let Err(message) = self.validate_incoming_payload(
+                session_id,
+                command,
+                payload,
+                identity_id,
+                sender_hash,
+            )
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &message);
+        }
         match command {
             CMD_CHALLENGE => {
                 self.handle_challenge_in(session_id, payload, sender_hash, identity_id)
@@ -1394,10 +1582,7 @@ impl GameApp for ChessApp {
             CMD_RESIGN => self.handle_resign_out(session_id, identity_id),
             CMD_DRAW_OFFER => self.handle_draw_offer_out(session_id, payload, identity_id),
             CMD_DRAW_ACCEPT => self.handle_draw_accept_out(session_id, identity_id),
-            CMD_DRAW_DECLINE => OutgoingResult {
-                payload: HashMap::new(),
-                fallback_text: "[LRGP Chess] Declined draw offer".into(),
-            },
+            CMD_DRAW_DECLINE => self.handle_draw_decline_out(session_id, identity_id),
             _ => OutgoingResult {
                 payload: payload.clone(),
                 fallback_text: format!("[LRGP Chess] {command}"),
@@ -1410,9 +1595,9 @@ impl GameApp for ChessApp {
         session_id: &str,
         command: &str,
         payload: &HashMap<String, rmpv::Value>,
-        sender_hash: &str,
+        identity_id: &str,
     ) -> (bool, Option<String>) {
-        let session = match self.get_session(session_id, "") {
+        let session = match self.get_session(session_id, identity_id) {
             Some(s) => s,
             None => {
                 return if command == CMD_CHALLENGE {
@@ -1423,22 +1608,171 @@ impl GameApp for ChessApp {
             }
         };
 
-        let ttl = {
-            let mut m = HashMap::new();
-            m.insert(STATUS_PENDING.to_string(), TTL_PENDING);
-            m.insert(STATUS_ACTIVE.to_string(), TTL_ACTIVE);
-            m
-        };
         let mut session = session;
-        if SessionStateMachine::check_expiry(&mut session, Some(&ttl), None) {
+        if SessionStateMachine::check_expiry(&mut session, Some(&Self::ttl_policy()), None) {
             self.save_session(&session);
             return (false, Some("Session expired".into()));
         }
 
         if command == CMD_MOVE {
-            return self.validate_move(&session, payload, sender_hash);
+            return self.validate_move(&session, payload, identity_id);
         }
 
+        (true, None)
+    }
+
+    fn validate_outgoing_action(
+        &self,
+        session_id: &str,
+        command: &str,
+        payload: &HashMap<String, rmpv::Value>,
+        identity_id: &str,
+    ) -> (bool, Option<String>) {
+        match command {
+            CMD_CHALLENGE | CMD_ACCEPT | CMD_DECLINE | CMD_RESIGN | CMD_DRAW_ACCEPT
+            | CMD_DRAW_DECLINE => {
+                if !payload.is_empty() {
+                    return (false, Some(format!("{command} payload must be empty")));
+                }
+            }
+            CMD_MOVE => {
+                if !has_exact_keys(payload, &[KEY_MOVE])
+                    || payload
+                        .get(KEY_MOVE)
+                        .and_then(value_as_str)
+                        .filter(|uci| !uci.is_empty())
+                        .is_none()
+                {
+                    return (
+                        false,
+                        Some("move intent must contain exactly non-empty string m".into()),
+                    );
+                }
+            }
+            CMD_DRAW_OFFER => {
+                if !(payload.is_empty() || has_exact_keys(payload, &[KEY_REASON])) {
+                    return (
+                        false,
+                        Some("draw_offer intent must be empty or exactly {r}".into()),
+                    );
+                }
+                if let Some(reason) = payload.get(KEY_REASON) {
+                    let Some(reason) = value_as_str(reason) else {
+                        return (false, Some("draw_offer r must be a string".into()));
+                    };
+                    if !matches!(reason, R_THREEFOLD | R_FIFTY_MOVE) {
+                        return (
+                            false,
+                            Some(format!("unsupported draw claim reason '{reason}'")),
+                        );
+                    }
+                }
+            }
+            _ => return (false, Some(format!("Unsupported action: {command}"))),
+        }
+
+        let Some(session) = self.get_session(session_id, identity_id) else {
+            return if command == CMD_CHALLENGE {
+                (true, None)
+            } else {
+                (false, Some("Session not found".into()))
+            };
+        };
+        if session.status == STATUS_EXPIRED {
+            return (false, Some("Session expired".into()));
+        }
+        if command == CMD_CHALLENGE {
+            return (false, Some("Session already exists".into()));
+        }
+
+        if command == CMD_DRAW_OFFER && session.has_draw_offer() {
+            let claim_is_immediately_valid = payload
+                .get(KEY_REASON)
+                .and_then(value_as_str)
+                .and_then(|reason| {
+                    let moves = meta_string_list(&session.metadata, "moves");
+                    replay_moves(&moves)
+                        .ok()
+                        .map(|board| claim_reason(&board, &moves) == Some(reason))
+                })
+                .unwrap_or(false);
+            if !claim_is_immediately_valid {
+                return (false, Some("A draw offer is already outstanding".into()));
+            }
+        }
+        if matches!(command, CMD_DRAW_ACCEPT | CMD_DRAW_DECLINE) {
+            let Some(offered_by) = session.draw_offered_by() else {
+                return (false, Some("No draw offer is outstanding".into()));
+            };
+            if offered_by == identity_id {
+                return (
+                    false,
+                    Some("A participant cannot answer its own draw offer".into()),
+                );
+            }
+        }
+
+        if command != CMD_MOVE {
+            let mut candidate = session;
+            let state_command = if command == CMD_DRAW_OFFER {
+                let claim_is_immediately_valid = payload
+                    .get(KEY_REASON)
+                    .and_then(value_as_str)
+                    .and_then(|reason| {
+                        let moves = meta_string_list(&candidate.metadata, "moves");
+                        replay_moves(&moves)
+                            .ok()
+                            .map(|board| claim_reason(&board, &moves) == Some(reason))
+                    })
+                    .unwrap_or(false);
+                if claim_is_immediately_valid {
+                    CMD_DRAW_ACCEPT
+                } else {
+                    CMD_DRAW_OFFER
+                }
+            } else {
+                command
+            };
+            return match SessionStateMachine::apply_command(&mut candidate, state_command, false) {
+                Ok(_) => (true, None),
+                Err(error) => (false, Some(error.to_string())),
+            };
+        }
+        if session.status != STATUS_ACTIVE {
+            return (
+                false,
+                Some(format!("Session is not active ({})", session.status)),
+            );
+        }
+        if meta_str(&session.metadata, "turn") != identity_id {
+            return (false, Some("Not your turn".into()));
+        }
+        let Some(uci) = payload.get(KEY_MOVE).and_then(value_as_str) else {
+            return (false, Some("Missing UCI move".into()));
+        };
+        let moves = meta_string_list(&session.metadata, "moves");
+        let mut board = match replay_moves(&moves) {
+            Ok(board) => board,
+            Err(error) => return (false, Some(format!("Local replay failed: {error}"))),
+        };
+        let mv: Move = match uci.parse() {
+            Ok(mv) => mv,
+            Err(_) => return (false, Some(format!("Invalid UCI: {uci}"))),
+        };
+        let mut legal = Vec::new();
+        board.generate_moves(|moves| {
+            legal.extend(moves);
+            false
+        });
+        if !legal.contains(&mv) {
+            return (
+                false,
+                Some(format!("Move {uci} is not legal from current position")),
+            );
+        }
+        // Exercise the move on the cloned board so future cozy-chess validation
+        // failures cannot occur only after the app begins mutating state.
+        board.play(mv);
         (true, None)
     }
 
@@ -1458,6 +1792,113 @@ impl GameApp for ChessApp {
             CMD_RESIGN | CMD_DRAW_ACCEPT | CMD_DRAW_DECLINE => "direct".into(),
             _ => "opportunistic".into(),
         }
+    }
+
+    fn get_session_record(&self, session_id: &str, identity_id: &str) -> Option<Session> {
+        self.get_session(session_id, identity_id)
+    }
+
+    fn upsert_session(&self, session: Session) -> Result<(), LrgpError> {
+        if session.app_id != self.app_id() || session.app_version != self.version() {
+            return Err(LrgpError::Validation {
+                code: ERR_UNSUPPORTED_APP.into(),
+                message: "session app/version does not match Chess".into(),
+            });
+        }
+        if session.identity_id.is_empty() {
+            return Err(LrgpError::Validation {
+                code: ERR_PROTOCOL_ERROR.into(),
+                message: "restored session must include identity_id".into(),
+            });
+        }
+        if !crate::envelope::is_valid_session_id(&session.session_id) {
+            return Err(LrgpError::InvalidEnvelope(
+                "restored session id must be exactly 16 lowercase hexadecimal characters".into(),
+            ));
+        }
+        let mut session = session;
+        SessionStateMachine::check_expiry(&mut session, Some(&Self::ttl_policy()), None);
+        if session.draw_offered_by().is_none() {
+            session.clear_draw_offer();
+        } else if let Some(owner) = session.draw_offered_by()
+            && owner != session.identity_id
+            && owner != session.contact_hash
+        {
+            return Err(LrgpError::Validation {
+                code: ERR_PROTOCOL_ERROR.into(),
+                message: "draw offer owner is not a bound participant".into(),
+            });
+        }
+        self.save_session(&session);
+        Ok(())
+    }
+
+    fn remove_session(&self, session_id: &str, identity_id: &str) -> bool {
+        self.sessions
+            .lock()
+            .unwrap()
+            .remove(&(session_id.to_string(), identity_id.to_string()))
+            .is_some()
+    }
+
+    fn list_session_records(&self, identity_id: Option<&str>) -> Vec<Session> {
+        let mut sessions = self.sessions.lock().unwrap();
+        let ttl = Self::ttl_policy();
+        sessions
+            .values_mut()
+            .filter(|session| identity_id.is_none_or(|id| session.identity_id == id))
+            .map(|session| {
+                SessionStateMachine::check_expiry(session, Some(&ttl), None);
+                session.clone()
+            })
+            .collect()
+    }
+
+    fn bind_session_peer(
+        &self,
+        session_id: &str,
+        identity_id: &str,
+        peer_hash: &str,
+    ) -> Result<(), LrgpError> {
+        if peer_hash.is_empty() {
+            return Err(LrgpError::ParticipantRequired);
+        }
+        let mut sessions = self.sessions.lock().unwrap();
+        let session = sessions
+            .get_mut(&(session_id.to_string(), identity_id.to_string()))
+            .ok_or_else(|| LrgpError::SessionNotFound(session_id.into()))?;
+        if !session.contact_hash.is_empty() && session.contact_hash != peer_hash {
+            return Err(LrgpError::UnauthorizedPeer {
+                session_id: session_id.into(),
+            });
+        }
+        session.contact_hash = peer_hash.into();
+        Ok(())
+    }
+
+    fn authorize_incoming(
+        &self,
+        session_id: &str,
+        command: &str,
+        sender_hash: &str,
+        identity_id: &str,
+    ) -> Result<(), LrgpError> {
+        let Some(session) = self.get_session(session_id, identity_id) else {
+            return if command == CMD_CHALLENGE {
+                Ok(())
+            } else {
+                Err(LrgpError::SessionNotFound(session_id.into()))
+            };
+        };
+        if session.status == STATUS_EXPIRED {
+            return Err(LrgpError::SessionExpired(session_id.into()));
+        }
+        if session.contact_hash.is_empty() || session.contact_hash != sender_hash {
+            return Err(LrgpError::UnauthorizedPeer {
+                session_id: session_id.into(),
+            });
+        }
+        Ok(())
     }
 
     fn snapshot_session(&self, session_id: &str, identity_id: &str) -> Option<Session> {
@@ -1897,6 +2338,69 @@ mod tests {
     }
 
     #[test]
+    fn test_remote_draw_response_uses_offer_owner_and_clears_it() {
+        let _coin = pin_coin(true);
+        let app = ChessApp::new();
+        setup_active(&app, "alice", "bob");
+
+        app.handle_outgoing("g1", CMD_DRAW_OFFER, &HashMap::new(), "alice");
+        let offered = app.get_session("g1", "alice").unwrap();
+        assert_eq!(offered.draw_offered_by(), Some("alice"));
+
+        let accepted = app.handle_incoming("g1", CMD_DRAW_ACCEPT, &HashMap::new(), "bob", "alice");
+        assert!(accepted.error.is_none());
+        let completed = app.get_session("g1", "alice").unwrap();
+        assert_eq!(completed.status, STATUS_COMPLETED);
+        assert_eq!(completed.draw_offered_by(), None);
+    }
+
+    #[test]
+    fn test_draw_offer_cannot_be_overwritten_or_answered_by_owner() {
+        let _coin = pin_coin(true);
+        let app = ChessApp::new();
+        setup_active(&app, "alice", "bob");
+
+        let offer = app.handle_incoming("g1", CMD_DRAW_OFFER, &HashMap::new(), "bob", "alice");
+        assert!(offer.error.is_none());
+        let duplicate = app.handle_incoming("g1", CMD_DRAW_OFFER, &HashMap::new(), "bob", "alice");
+        assert!(duplicate.error.is_some());
+        let self_decline =
+            app.handle_incoming("g1", CMD_DRAW_DECLINE, &HashMap::new(), "bob", "alice");
+        assert!(self_decline.error.is_some());
+        let session = app.get_session("g1", "alice").unwrap();
+        assert_eq!(session.status, STATUS_ACTIVE);
+        assert_eq!(session.draw_offered_by(), Some("bob"));
+    }
+
+    #[test]
+    fn test_strict_payload_shapes_reject_before_mutation() {
+        let _coin = pin_coin(true);
+        let app = ChessApp::new();
+        let junk = HashMap::from([("extra".into(), rmpv::Value::Boolean(true))]);
+        let malformed_challenge = app.handle_incoming("g1", CMD_CHALLENGE, &junk, "alice", "bob");
+        assert!(malformed_challenge.error.is_some());
+        assert!(app.get_session("g1", "bob").is_none());
+
+        setup_active(&app, "alice", "bob");
+        let before = app.get_session("g1", "bob").unwrap();
+        let intent = HashMap::from([(KEY_MOVE.into(), rmpv::Value::String("e2e4".into()))]);
+        let mut wire_move = app
+            .handle_outgoing("g1", CMD_MOVE, &intent, "alice")
+            .payload;
+        wire_move.insert("extra".into(), rmpv::Value::Nil);
+        let malformed = app.handle_incoming("g1", CMD_MOVE, &wire_move, "alice", "bob");
+        assert!(malformed.error.is_some());
+        let after = app.get_session("g1", "bob").unwrap();
+        assert_eq!(after.metadata["moves"], before.metadata["moves"]);
+
+        let invalid_offer =
+            HashMap::from([(KEY_REASON.into(), rmpv::Value::String(String::new().into()))]);
+        let (valid, _) =
+            app.validate_outgoing_action("g1", CMD_DRAW_OFFER, &invalid_offer, "alice");
+        assert!(!valid);
+    }
+
+    #[test]
     fn test_draw_claim_threefold_auto_accepts() {
         let _coin = pin_coin(true);
         let app = ChessApp::new();
@@ -1993,7 +2497,15 @@ mod tests {
         let out = app.handle_outgoing("g1", CMD_MOVE, &p, "alice");
 
         use crate::envelope::{pack_envelope, validate_envelope_size};
-        let env = pack_envelope(APP_ID, APP_VERSION, CMD_MOVE, "g1", Some(out.payload), None);
+        let env = pack_envelope(
+            APP_ID,
+            APP_VERSION,
+            CMD_MOVE,
+            "0000000000000001",
+            Some(out.payload),
+            None,
+        )
+        .unwrap();
         let size = validate_envelope_size(&env).expect("envelope size OK");
         assert!(size <= 150, "move envelope {} bytes (budget ≤150)", size);
     }
@@ -2021,7 +2533,8 @@ mod tests {
             "abcdef0123456789",
             Some(p),
             None,
-        );
+        )
+        .unwrap();
         let size = validate_envelope_size(&env).expect("envelope size OK");
         assert!(
             size <= 150,
@@ -2085,6 +2598,7 @@ mod tests {
         let mut p = HashMap::new();
         p.insert(KEY_MOVE.to_string(), rmpv::Value::String("e2e4".into()));
         p.insert(KEY_PLY.to_string(), rmpv::Value::Integer(1.into()));
+        p.insert(KEY_TERMINAL.to_string(), rmpv::Value::String("".into()));
         let (valid, err) = app.validate_move(&session, &p, "alice");
         assert!(!valid);
         assert!(err.unwrap().contains("Ply mismatch"));

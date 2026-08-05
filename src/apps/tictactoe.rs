@@ -7,7 +7,8 @@ use serde_json::Value as JsonValue;
 
 use crate::app_base::{AppManifest, GameApp, IncomingResult, OutgoingResult};
 use crate::constants::*;
-use crate::envelope::{value_as_str, value_as_u64};
+use crate::envelope::{has_exact_keys, value_as_str, value_as_u64};
+use crate::errors::LrgpError;
 use crate::session::{Session, SessionStateMachine};
 
 const EMPTY_BOARD: &str = "_________";
@@ -25,6 +26,9 @@ const WIN_LINES: [(usize, usize, usize); 8] = [
 
 fn check_winner(board: &str) -> Option<char> {
     let b: Vec<char> = board.chars().collect();
+    if b.len() != EMPTY_BOARD.len() {
+        return None;
+    }
     for &(a, bi, c) in &WIN_LINES {
         if b[a] != '_' && b[a] == b[bi] && b[bi] == b[c] {
             return Some(b[a]);
@@ -34,7 +38,9 @@ fn check_winner(board: &str) -> Option<char> {
 }
 
 fn check_draw(board: &str) -> bool {
-    !board.contains('_') && check_winner(board).is_none()
+    board.len() == EMPTY_BOARD.len()
+        && board.bytes().all(|cell| matches!(cell, b'X' | b'O'))
+        && check_winner(board).is_none()
 }
 
 fn marker_for_move(move_num: u64) -> char {
@@ -98,10 +104,10 @@ impl TicTacToeApp {
     }
 
     fn get_session(&self, session_id: &str, identity_id: &str) -> Option<Session> {
-        let sessions = self.sessions.lock().unwrap();
-        sessions
-            .get(&(session_id.to_string(), identity_id.to_string()))
-            .cloned()
+        let mut sessions = self.sessions.lock().unwrap();
+        let session = sessions.get_mut(&(session_id.to_string(), identity_id.to_string()))?;
+        SessionStateMachine::check_expiry(session, Some(&Self::ttl_policy()), None);
+        Some(session.clone())
     }
 
     fn save_session(&self, session: &Session) {
@@ -110,6 +116,13 @@ impl TicTacToeApp {
             (session.session_id.clone(), session.identity_id.clone()),
             session.clone(),
         );
+    }
+
+    fn ttl_policy() -> HashMap<String, f64> {
+        let mut ttl = HashMap::new();
+        ttl.insert(STATUS_PENDING.into(), 86400.0);
+        ttl.insert(STATUS_ACTIVE.into(), 86400.0);
+        ttl
     }
 
     fn default_metadata(my_marker: &str, first_turn: &str) -> HashMap<String, JsonValue> {
@@ -122,7 +135,72 @@ impl TicTacToeApp {
         m.insert("winner".into(), JsonValue::String("".into()));
         m.insert("terminal".into(), JsonValue::String("".into()));
         m.insert("draw_offered".into(), JsonValue::Bool(false));
+        m.insert("draw_offered_by".into(), JsonValue::String("".into()));
         m
+    }
+
+    fn validate_incoming_payload(
+        &self,
+        session_id: &str,
+        command: &str,
+        payload: &HashMap<String, rmpv::Value>,
+        identity_id: &str,
+    ) -> Result<(), String> {
+        match command {
+            CMD_CHALLENGE | CMD_DECLINE | CMD_RESIGN | CMD_DRAW_OFFER | CMD_DRAW_ACCEPT
+            | CMD_DRAW_DECLINE => {
+                if !payload.is_empty() {
+                    return Err(format!("{command} payload must be empty"));
+                }
+            }
+            CMD_ACCEPT => {
+                if !has_exact_keys(payload, &["b", "t"]) {
+                    return Err("accept payload must contain exactly b and t".into());
+                }
+                let board = payload.get("b").and_then(value_as_str).unwrap_or("");
+                let turn = payload.get("t").and_then(value_as_str).unwrap_or("");
+                let expected_turn = self
+                    .get_session(session_id, identity_id)
+                    .map(|session| meta_str(&session.metadata, "first_turn"))
+                    .unwrap_or_default();
+                if board != EMPTY_BOARD {
+                    return Err("accept board must be empty".into());
+                }
+                if expected_turn.is_empty() || turn != expected_turn {
+                    return Err("accept first turn does not match challenge".into());
+                }
+            }
+            CMD_MOVE => {
+                let terminal = payload
+                    .get("x")
+                    .and_then(value_as_str)
+                    .ok_or_else(|| "move terminal marker must be a string".to_string())?;
+                let expected: &[&str] = if terminal == "win" {
+                    &["i", "b", "n", "t", "x", "w"]
+                } else {
+                    &["i", "b", "n", "t", "x"]
+                };
+                if !has_exact_keys(payload, expected) {
+                    return Err(format!(
+                        "move payload has invalid keys for terminal marker '{terminal}'"
+                    ));
+                }
+                if !matches!(terminal, "" | "win" | "draw") {
+                    return Err(format!("unsupported terminal marker '{terminal}'"));
+                }
+                if payload.get("i").and_then(value_as_u64).is_none()
+                    || payload.get("n").and_then(value_as_u64).is_none()
+                    || payload.get("b").and_then(value_as_str).is_none()
+                    || payload.get("t").and_then(value_as_str).is_none()
+                    || (terminal == "win" && payload.get("w").and_then(value_as_str).is_none())
+                {
+                    return Err("move payload contains a value with the wrong type".into());
+                }
+            }
+            CMD_ERROR => {}
+            _ => return Err(format!("unsupported command '{command}'")),
+        }
+        Ok(())
     }
 
     // --- Incoming handlers ---
@@ -134,6 +212,13 @@ impl TicTacToeApp {
         sender_hash: &str,
         identity_id: &str,
     ) -> IncomingResult {
+        if let Some(existing) = self.get_session(session_id, identity_id) {
+            return IncomingResult {
+                session: Some(session_to_json(&existing)),
+                emit: None,
+                error: None,
+            };
+        }
         let mut session = Session::new(session_id);
         session.identity_id = identity_id.to_string();
         session.app_id = "ttt".to_string();
@@ -168,19 +253,21 @@ impl TicTacToeApp {
             session.contact_hash = sender_hash.to_string();
         }
 
+        let first_turn = meta_str(&session.metadata, "first_turn");
+        let board = payload.get("b").and_then(value_as_str).unwrap_or("");
+        let turn = payload.get("t").and_then(value_as_str).unwrap_or("");
+        if board != EMPTY_BOARD {
+            return error_result(ERR_PROTOCOL_ERROR, "ACCEPT must contain an empty board");
+        }
+        if first_turn.is_empty() || turn != first_turn {
+            return error_result(
+                ERR_PROTOCOL_ERROR,
+                "ACCEPT first turn does not match challenge",
+            );
+        }
         if let Err(e) = SessionStateMachine::apply_command(&mut session, CMD_ACCEPT, false) {
             return error_result(ERR_PROTOCOL_ERROR, &e.to_string());
         }
-
-        let board = payload
-            .get("b")
-            .and_then(value_as_str)
-            .unwrap_or(EMPTY_BOARD);
-        let first_turn = meta_str(&session.metadata, "first_turn");
-        let turn = payload
-            .get("t")
-            .and_then(value_as_str)
-            .unwrap_or(&first_turn);
 
         session
             .metadata
@@ -272,11 +359,13 @@ impl TicTacToeApp {
         session
             .metadata
             .insert("winner".into(), JsonValue::String(winner.to_string()));
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        session.clear_draw_offer();
 
-        let _ = SessionStateMachine::apply_command(&mut session, CMD_MOVE, !terminal.is_empty());
+        if let Err(error) =
+            SessionStateMachine::apply_command(&mut session, CMD_MOVE, !terminal.is_empty())
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
         session.unread = 1;
         self.save_session(&session);
 
@@ -309,7 +398,9 @@ impl TicTacToeApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        let _ = SessionStateMachine::apply_command(&mut session, CMD_RESIGN, false);
+        if let Err(error) = SessionStateMachine::apply_command(&mut session, CMD_RESIGN, false) {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
         session
             .metadata
             .insert("terminal".into(), JsonValue::String("resign".into()));
@@ -322,6 +413,7 @@ impl TicTacToeApp {
         session
             .metadata
             .insert("winner".into(), JsonValue::String(winner));
+        session.clear_draw_offer();
         session.unread = 1;
         self.save_session(&session);
 
@@ -343,9 +435,14 @@ impl TicTacToeApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(true));
+        if session.has_draw_offer() {
+            return error_result(ERR_PROTOCOL_ERROR, "A draw offer is already outstanding");
+        }
+        if let Err(error) = SessionStateMachine::apply_command(&mut session, CMD_DRAW_OFFER, false)
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
+        session.set_draw_offer(sender_hash);
         session.unread = 1;
         self.save_session(&session);
 
@@ -367,13 +464,24 @@ impl TicTacToeApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        let _ = SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false);
+        let Some(offered_by) = session.draw_offered_by() else {
+            return error_result(ERR_PROTOCOL_ERROR, "No draw offer is outstanding");
+        };
+        if offered_by == sender_hash {
+            return error_result(
+                ERR_PROTOCOL_ERROR,
+                "A participant cannot accept its own draw offer",
+            );
+        }
+
+        if let Err(error) = SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false)
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
         session
             .metadata
             .insert("terminal".into(), JsonValue::String("draw".into()));
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        session.clear_draw_offer();
         session.unread = 1;
         self.save_session(&session);
 
@@ -395,9 +503,22 @@ impl TicTacToeApp {
             None => return error_result(ERR_PROTOCOL_ERROR, "Unknown session"),
         };
 
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        let Some(offered_by) = session.draw_offered_by() else {
+            return error_result(ERR_PROTOCOL_ERROR, "No draw offer is outstanding");
+        };
+        if offered_by == sender_hash {
+            return error_result(
+                ERR_PROTOCOL_ERROR,
+                "A participant cannot decline its own draw offer",
+            );
+        }
+
+        if let Err(error) =
+            SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false)
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &error.to_string());
+        }
+        session.clear_draw_offer();
         session.unread = 1;
         self.save_session(&session);
 
@@ -606,9 +727,7 @@ impl TicTacToeApp {
                 String::new()
             }),
         );
-        session
-            .metadata
-            .insert("draw_offered".into(), JsonValue::Bool(false));
+        session.clear_draw_offer();
         let _ = SessionStateMachine::apply_command(&mut session, CMD_MOVE, !terminal.is_empty());
         self.save_session(&session);
 
@@ -629,11 +748,25 @@ impl TicTacToeApp {
                 "winner".into(),
                 JsonValue::String(session.contact_hash.clone()),
             );
+            session.clear_draw_offer();
             self.save_session(&session);
         }
         OutgoingResult {
             payload: HashMap::new(),
             fallback_text: "[LRGP TTT] Resigned.".into(),
+        }
+    }
+
+    fn handle_draw_offer_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
+        if let Some(mut session) = self.get_session(session_id, identity_id)
+            && SessionStateMachine::apply_command(&mut session, CMD_DRAW_OFFER, false).is_ok()
+        {
+            session.set_draw_offer(identity_id);
+            self.save_session(&session);
+        }
+        OutgoingResult {
+            payload: HashMap::new(),
+            fallback_text: "[LRGP TTT] Offered a draw".into(),
         }
     }
 
@@ -643,14 +776,25 @@ impl TicTacToeApp {
             session
                 .metadata
                 .insert("terminal".into(), JsonValue::String("draw".into()));
-            session
-                .metadata
-                .insert("draw_offered".into(), JsonValue::Bool(false));
+            session.clear_draw_offer();
             self.save_session(&session);
         }
         OutgoingResult {
             payload: HashMap::new(),
             fallback_text: "[LRGP TTT] Draw accepted".into(),
+        }
+    }
+
+    fn handle_draw_decline_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
+        if let Some(mut session) = self.get_session(session_id, identity_id)
+            && SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false).is_ok()
+        {
+            session.clear_draw_offer();
+            self.save_session(&session);
+        }
+        OutgoingResult {
+            payload: HashMap::new(),
+            fallback_text: "[LRGP TTT] Declined draw offer".into(),
         }
     }
 
@@ -688,10 +832,19 @@ impl TicTacToeApp {
         };
         let board_str = payload.get("b").and_then(value_as_str).unwrap_or("");
         let move_num = payload.get("n").and_then(value_as_u64).unwrap_or(0);
-        let terminal = payload.get("x").and_then(value_as_str).unwrap_or("");
+        let Some(terminal) = payload.get("x").and_then(value_as_str) else {
+            return (false, Some("Terminal marker is required".into()));
+        };
 
         // 3. Cell must be empty
         let old_board = meta_str(meta, "board");
+        if old_board.len() != EMPTY_BOARD.len()
+            || !old_board
+                .bytes()
+                .all(|cell| matches!(cell, b'_' | b'X' | b'O'))
+        {
+            return (false, Some("Stored board is invalid".into()));
+        }
         let old_chars: Vec<char> = old_board.chars().collect();
         if index >= old_chars.len() || old_chars[index] != '_' {
             return (false, Some(format!("Cell {index} is already occupied")));
@@ -727,6 +880,7 @@ impl TicTacToeApp {
         // 6. Terminal status must match computed result
         let winner = check_winner(board_str);
         let is_draw = check_draw(board_str);
+        let claimed_winner = payload.get("w").and_then(value_as_str).unwrap_or("");
 
         if winner.is_some() && terminal != "win" {
             return (
@@ -744,6 +898,21 @@ impl TicTacToeApp {
             return (
                 false,
                 Some(format!("No win/draw but terminal='{terminal}'")),
+            );
+        }
+        if winner.is_some() {
+            if claimed_winner != sender_hash {
+                return (
+                    false,
+                    Some(format!(
+                        "Winner mismatch: expected {sender_hash}, got {claimed_winner}"
+                    )),
+                );
+            }
+        } else if !claimed_winner.is_empty() {
+            return (
+                false,
+                Some("Winner must be empty on a non-winning move".into()),
             );
         }
 
@@ -846,10 +1015,9 @@ impl GameApp for TicTacToeApp {
         preferred_delivery.insert(CMD_DRAW_OFFER.into(), "opportunistic".into());
         preferred_delivery.insert(CMD_DRAW_ACCEPT.into(), "direct".into());
         preferred_delivery.insert(CMD_DRAW_DECLINE.into(), "direct".into());
+        preferred_delivery.insert(CMD_ERROR.into(), "opportunistic".into());
 
-        let mut ttl = HashMap::new();
-        ttl.insert(STATUS_PENDING.into(), 86400.0);
-        ttl.insert(STATUS_ACTIVE.into(), 86400.0);
+        let ttl = Self::ttl_policy();
 
         AppManifest {
             app_id: "ttt".into(),
@@ -868,6 +1036,7 @@ impl GameApp for TicTacToeApp {
                 CMD_DRAW_OFFER.into(),
                 CMD_DRAW_ACCEPT.into(),
                 CMD_DRAW_DECLINE.into(),
+                CMD_ERROR.into(),
             ],
             preferred_delivery,
             ttl,
@@ -882,6 +1051,12 @@ impl GameApp for TicTacToeApp {
         sender_hash: &str,
         identity_id: &str,
     ) -> IncomingResult {
+        if command != CMD_ERROR
+            && let Err(message) =
+                self.validate_incoming_payload(session_id, command, payload, identity_id)
+        {
+            return error_result(ERR_PROTOCOL_ERROR, &message);
+        }
         match command {
             CMD_CHALLENGE => {
                 self.handle_challenge_in(session_id, payload, sender_hash, identity_id)
@@ -920,15 +1095,9 @@ impl GameApp for TicTacToeApp {
             CMD_DECLINE => self.handle_decline_out(session_id, identity_id),
             CMD_MOVE => self.handle_move_out(session_id, payload, identity_id),
             CMD_RESIGN => self.handle_resign_out(session_id, identity_id),
-            CMD_DRAW_OFFER => OutgoingResult {
-                payload: HashMap::new(),
-                fallback_text: "[LRGP TTT] Offered a draw".into(),
-            },
+            CMD_DRAW_OFFER => self.handle_draw_offer_out(session_id, identity_id),
             CMD_DRAW_ACCEPT => self.handle_draw_accept_out(session_id, identity_id),
-            CMD_DRAW_DECLINE => OutgoingResult {
-                payload: HashMap::new(),
-                fallback_text: "[LRGP TTT] Declined draw offer".into(),
-            },
+            CMD_DRAW_DECLINE => self.handle_draw_decline_out(session_id, identity_id),
             _ => OutgoingResult {
                 payload: payload.clone(),
                 fallback_text: format!("[LRGP TTT] {command}"),
@@ -941,9 +1110,9 @@ impl GameApp for TicTacToeApp {
         session_id: &str,
         command: &str,
         payload: &HashMap<String, rmpv::Value>,
-        sender_hash: &str,
+        identity_id: &str,
     ) -> (bool, Option<String>) {
-        let session = match self.get_session(session_id, "") {
+        let session = match self.get_session(session_id, identity_id) {
             Some(s) => s,
             None => {
                 return if command == CMD_CHALLENGE {
@@ -954,22 +1123,104 @@ impl GameApp for TicTacToeApp {
             }
         };
 
-        let ttl = {
-            let mut m = HashMap::new();
-            m.insert(STATUS_PENDING.to_string(), 86400.0);
-            m.insert(STATUS_ACTIVE.to_string(), 86400.0);
-            m
-        };
         let mut session = session;
-        if SessionStateMachine::check_expiry(&mut session, Some(&ttl), None) {
+        if SessionStateMachine::check_expiry(&mut session, Some(&Self::ttl_policy()), None) {
             self.save_session(&session);
             return (false, Some("Session expired".into()));
         }
 
         if command == CMD_MOVE {
-            return self.validate_move(&session, payload, sender_hash);
+            return self.validate_move(&session, payload, identity_id);
         }
 
+        (true, None)
+    }
+
+    fn validate_outgoing_action(
+        &self,
+        session_id: &str,
+        command: &str,
+        payload: &HashMap<String, rmpv::Value>,
+        identity_id: &str,
+    ) -> (bool, Option<String>) {
+        match command {
+            CMD_CHALLENGE | CMD_ACCEPT | CMD_DECLINE | CMD_RESIGN | CMD_DRAW_OFFER
+            | CMD_DRAW_ACCEPT | CMD_DRAW_DECLINE => {
+                if !payload.is_empty() {
+                    return (false, Some(format!("{command} payload must be empty")));
+                }
+            }
+            CMD_MOVE => {
+                if !has_exact_keys(payload, &["i"])
+                    || payload.get("i").and_then(value_as_u64).is_none()
+                {
+                    return (
+                        false,
+                        Some("move intent must contain exactly integer i".into()),
+                    );
+                }
+            }
+            _ => return (false, Some(format!("Unsupported action: {command}"))),
+        }
+
+        let Some(session) = self.get_session(session_id, identity_id) else {
+            return if command == CMD_CHALLENGE {
+                (true, None)
+            } else {
+                (false, Some("Session not found".into()))
+            };
+        };
+        if session.status == STATUS_EXPIRED {
+            return (false, Some("Session expired".into()));
+        }
+        if command == CMD_CHALLENGE {
+            return (false, Some("Session already exists".into()));
+        }
+
+        if command == CMD_DRAW_OFFER && session.has_draw_offer() {
+            return (false, Some("A draw offer is already outstanding".into()));
+        }
+        if matches!(command, CMD_DRAW_ACCEPT | CMD_DRAW_DECLINE) {
+            let Some(offered_by) = session.draw_offered_by() else {
+                return (false, Some("No draw offer is outstanding".into()));
+            };
+            if offered_by == identity_id {
+                return (
+                    false,
+                    Some("A participant cannot answer its own draw offer".into()),
+                );
+            }
+        }
+
+        if command != CMD_MOVE {
+            let mut candidate = session;
+            return match SessionStateMachine::apply_command(&mut candidate, command, false) {
+                Ok(_) => (true, None),
+                Err(error) => (false, Some(error.to_string())),
+            };
+        }
+        if session.status != STATUS_ACTIVE {
+            return (
+                false,
+                Some(format!("Session is not active ({})", session.status)),
+            );
+        }
+        if meta_str(&session.metadata, "turn") != identity_id {
+            return (false, Some("Not your turn".into()));
+        }
+        let Some(index) = payload.get("i").and_then(value_as_u64) else {
+            return (false, Some("Invalid cell index".into()));
+        };
+        if index > 8 {
+            return (false, Some("Invalid cell index".into()));
+        }
+        let board = meta_str(&session.metadata, "board");
+        if board.as_bytes().get(index as usize) != Some(&b'_') {
+            return (false, Some(format!("Cell {index} is already occupied")));
+        }
+        if session.contact_hash.is_empty() {
+            return (false, Some("Opponent unknown".into()));
+        }
         (true, None)
     }
 
@@ -989,6 +1240,115 @@ impl GameApp for TicTacToeApp {
             CMD_RESIGN | CMD_DRAW_ACCEPT | CMD_DRAW_DECLINE => "direct".into(),
             _ => "opportunistic".into(),
         }
+    }
+
+    fn get_session_record(&self, session_id: &str, identity_id: &str) -> Option<Session> {
+        self.get_session(session_id, identity_id)
+    }
+
+    fn upsert_session(&self, session: Session) -> Result<(), LrgpError> {
+        if session.app_id != self.app_id() || session.app_version != self.version() {
+            return Err(LrgpError::Validation {
+                code: ERR_UNSUPPORTED_APP.into(),
+                message: "session app/version does not match Tic-Tac-Toe".into(),
+            });
+        }
+        if session.identity_id.is_empty() {
+            return Err(LrgpError::Validation {
+                code: ERR_PROTOCOL_ERROR.into(),
+                message: "restored session must include identity_id".into(),
+            });
+        }
+        if !crate::envelope::is_valid_session_id(&session.session_id) {
+            return Err(LrgpError::InvalidEnvelope(
+                "restored session id must be exactly 16 lowercase hexadecimal characters".into(),
+            ));
+        }
+        let mut session = session;
+        SessionStateMachine::check_expiry(&mut session, Some(&Self::ttl_policy()), None);
+        if session.draw_offered_by().is_none() {
+            // Pre-owner persisted records and stray owner metadata cannot
+            // safely authorize a response.
+            session.clear_draw_offer();
+        } else if let Some(owner) = session.draw_offered_by()
+            && owner != session.identity_id
+            && owner != session.contact_hash
+        {
+            return Err(LrgpError::Validation {
+                code: ERR_PROTOCOL_ERROR.into(),
+                message: "draw offer owner is not a bound participant".into(),
+            });
+        }
+        self.save_session(&session);
+        Ok(())
+    }
+
+    fn remove_session(&self, session_id: &str, identity_id: &str) -> bool {
+        self.sessions
+            .lock()
+            .unwrap()
+            .remove(&(session_id.to_string(), identity_id.to_string()))
+            .is_some()
+    }
+
+    fn list_session_records(&self, identity_id: Option<&str>) -> Vec<Session> {
+        let mut sessions = self.sessions.lock().unwrap();
+        let ttl = Self::ttl_policy();
+        sessions
+            .values_mut()
+            .filter(|session| identity_id.is_none_or(|id| session.identity_id == id))
+            .map(|session| {
+                SessionStateMachine::check_expiry(session, Some(&ttl), None);
+                session.clone()
+            })
+            .collect()
+    }
+
+    fn bind_session_peer(
+        &self,
+        session_id: &str,
+        identity_id: &str,
+        peer_hash: &str,
+    ) -> Result<(), LrgpError> {
+        if peer_hash.is_empty() {
+            return Err(LrgpError::ParticipantRequired);
+        }
+        let mut sessions = self.sessions.lock().unwrap();
+        let session = sessions
+            .get_mut(&(session_id.to_string(), identity_id.to_string()))
+            .ok_or_else(|| LrgpError::SessionNotFound(session_id.into()))?;
+        if !session.contact_hash.is_empty() && session.contact_hash != peer_hash {
+            return Err(LrgpError::UnauthorizedPeer {
+                session_id: session_id.into(),
+            });
+        }
+        session.contact_hash = peer_hash.into();
+        Ok(())
+    }
+
+    fn authorize_incoming(
+        &self,
+        session_id: &str,
+        command: &str,
+        sender_hash: &str,
+        identity_id: &str,
+    ) -> Result<(), LrgpError> {
+        let Some(session) = self.get_session(session_id, identity_id) else {
+            return if command == CMD_CHALLENGE {
+                Ok(())
+            } else {
+                Err(LrgpError::SessionNotFound(session_id.into()))
+            };
+        };
+        if session.status == STATUS_EXPIRED {
+            return Err(LrgpError::SessionExpired(session_id.into()));
+        }
+        if session.contact_hash.is_empty() || session.contact_hash != sender_hash {
+            return Err(LrgpError::UnauthorizedPeer {
+                session_id: session_id.into(),
+            });
+        }
+        Ok(())
     }
 
     fn snapshot_session(&self, session_id: &str, identity_id: &str) -> Option<Session> {
@@ -1454,6 +1814,77 @@ mod tests {
         let sess = app.get_session("g1", "alice").unwrap();
         assert_eq!(sess.status, STATUS_COMPLETED);
         assert_eq!(sess.metadata["terminal"], "draw");
+    }
+
+    #[test]
+    fn test_remote_draw_response_uses_offer_owner_and_clears_it() {
+        let app = TicTacToeApp::new();
+        app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), "alice");
+        app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
+        let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), "bob");
+        app.handle_incoming("g1", CMD_ACCEPT, &accept.payload, "bob", "alice");
+
+        app.handle_outgoing("g1", CMD_DRAW_OFFER, &HashMap::new(), "alice");
+        let offered = app.get_session("g1", "alice").unwrap();
+        assert_eq!(offered.draw_offered_by(), Some("alice"));
+
+        let accepted = app.handle_incoming("g1", CMD_DRAW_ACCEPT, &HashMap::new(), "bob", "alice");
+        assert!(accepted.error.is_none());
+        let completed = app.get_session("g1", "alice").unwrap();
+        assert_eq!(completed.status, STATUS_COMPLETED);
+        assert_eq!(completed.draw_offered_by(), None);
+    }
+
+    #[test]
+    fn test_draw_offer_cannot_be_overwritten_or_answered_by_owner() {
+        let app = TicTacToeApp::new();
+        app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), "alice");
+        app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
+        let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), "bob");
+        app.handle_incoming("g1", CMD_ACCEPT, &accept.payload, "bob", "alice");
+
+        let offer = app.handle_incoming("g1", CMD_DRAW_OFFER, &HashMap::new(), "bob", "alice");
+        assert!(offer.error.is_none());
+        let duplicate = app.handle_incoming("g1", CMD_DRAW_OFFER, &HashMap::new(), "bob", "alice");
+        assert!(duplicate.error.is_some());
+        let self_accept =
+            app.handle_incoming("g1", CMD_DRAW_ACCEPT, &HashMap::new(), "bob", "alice");
+        assert!(self_accept.error.is_some());
+        let session = app.get_session("g1", "alice").unwrap();
+        assert_eq!(session.status, STATUS_ACTIVE);
+        assert_eq!(session.draw_offered_by(), Some("bob"));
+    }
+
+    #[test]
+    fn test_strict_payload_shapes_reject_before_mutation() {
+        let app = TicTacToeApp::new();
+        let junk = HashMap::from([("extra".into(), rmpv::Value::Boolean(true))]);
+        let malformed_challenge = app.handle_incoming("g1", CMD_CHALLENGE, &junk, "alice", "bob");
+        assert!(malformed_challenge.error.is_some());
+        assert!(app.get_session("g1", "bob").is_none());
+
+        app.handle_outgoing("g1", CMD_CHALLENGE, &HashMap::new(), "alice");
+        app.handle_incoming("g1", CMD_CHALLENGE, &HashMap::new(), "alice", "bob");
+        let accept = app.handle_outgoing("g1", CMD_ACCEPT, &HashMap::new(), "bob");
+        app.handle_incoming("g1", CMD_ACCEPT, &accept.payload, "bob", "alice");
+
+        let before = app.get_session("g1", "bob").unwrap();
+        let intent = HashMap::from([("i".into(), rmpv::Value::from(4))]);
+        let mut wire_move = app
+            .handle_outgoing("g1", CMD_MOVE, &intent, "alice")
+            .payload;
+        wire_move.insert("extra".into(), rmpv::Value::Nil);
+        let malformed = app.handle_incoming("g1", CMD_MOVE, &wire_move, "alice", "bob");
+        assert!(malformed.error.is_some());
+        let after = app.get_session("g1", "bob").unwrap();
+        assert_eq!(after.metadata["board"], before.metadata["board"]);
+
+        let invalid_intent = HashMap::from([
+            ("i".into(), rmpv::Value::from(4)),
+            ("extra".into(), rmpv::Value::Nil),
+        ]);
+        let (valid, _) = app.validate_outgoing_action("g1", CMD_MOVE, &invalid_intent, "alice");
+        assert!(!valid);
     }
 
     #[test]

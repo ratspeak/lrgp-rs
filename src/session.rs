@@ -50,6 +50,47 @@ impl Session {
             last_action_at: now,
         }
     }
+
+    /// Record the participant who currently owns the outstanding draw offer.
+    /// The boolean is retained for existing UI/storage consumers, while the
+    /// owner prevents a participant from accepting or declining its own offer.
+    pub fn set_draw_offer(&mut self, offered_by: &str) {
+        self.metadata
+            .insert("draw_offered".into(), serde_json::Value::Bool(true));
+        self.metadata.insert(
+            "draw_offered_by".into(),
+            serde_json::Value::String(offered_by.into()),
+        );
+    }
+
+    /// Clear both halves of the draw-offer state atomically.
+    pub fn clear_draw_offer(&mut self) {
+        self.metadata
+            .insert("draw_offered".into(), serde_json::Value::Bool(false));
+        self.metadata.insert(
+            "draw_offered_by".into(),
+            serde_json::Value::String(String::new()),
+        );
+    }
+
+    /// Return the outstanding offer's owner only when the metadata is
+    /// complete and internally consistent.
+    pub fn has_draw_offer(&self) -> bool {
+        self.metadata
+            .get("draw_offered")
+            .and_then(|value| value.as_bool())
+            == Some(true)
+    }
+
+    pub fn draw_offered_by(&self) -> Option<&str> {
+        if !self.has_draw_offer() {
+            return None;
+        }
+        self.metadata
+            .get("draw_offered_by")
+            .and_then(|value| value.as_str())
+            .filter(|owner| !owner.is_empty())
+    }
 }
 
 /// Enforces legal game session state transitions.
@@ -218,6 +259,21 @@ mod tests {
         let mut s = make_session(STATUS_COMPLETED);
         let result = SessionStateMachine::apply_command(&mut s, CMD_MOVE, false);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn draw_offer_owner_is_set_and_cleared_with_flag() {
+        let mut session = make_session(STATUS_ACTIVE);
+        assert!(!session.has_draw_offer());
+        assert_eq!(session.draw_offered_by(), None);
+
+        session.set_draw_offer("alice");
+        assert!(session.has_draw_offer());
+        assert_eq!(session.draw_offered_by(), Some("alice"));
+
+        session.clear_draw_offer();
+        assert!(!session.has_draw_offer());
+        assert_eq!(session.draw_offered_by(), None);
     }
 
     #[test]

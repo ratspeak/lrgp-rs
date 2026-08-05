@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use lrgp::app_base::IncomingDispatch;
 use lrgp::apps::tictactoe::TicTacToeApp;
 use lrgp::envelope::value_as_str;
 use lrgp::router::LrgpRouter;
@@ -15,9 +16,19 @@ fn main() {
 
     // Player A sends a challenge
     println!("=== Player A challenges Player B ===");
-    let (env, fallback) = router
-        .dispatch_outgoing("ttt", 1, "challenge", "", &HashMap::new(), player_a)
+    let prepared = router
+        .dispatch_outgoing_to(
+            "ttt",
+            1,
+            "challenge",
+            "",
+            &HashMap::new(),
+            player_a,
+            player_b,
+        )
         .unwrap();
+    let env = prepared.envelope;
+    let fallback = prepared.fallback_text;
     let session_id = value_as_str(env.get("s").unwrap()).unwrap().to_string();
     println!("Fallback: {fallback}");
     println!("Session ID: {session_id}");
@@ -25,22 +36,36 @@ fn main() {
     // Player B receives the challenge
     println!("\n=== Player B receives challenge ===");
     let result = router.dispatch_incoming(&env, player_a, player_b).unwrap();
-    if let Some(emit) = &result.emit {
+    if let IncomingDispatch::Applied(result) = result
+        && let Some(emit) = &result.emit
+    {
         println!("Event: {:?}", emit.get("type"));
     }
 
     // Player B accepts
     println!("\n=== Player B accepts ===");
-    let (accept_env, fallback) = router
-        .dispatch_outgoing("ttt", 1, "accept", &session_id, &HashMap::new(), player_b)
+    let prepared = router
+        .dispatch_outgoing_to(
+            "ttt",
+            1,
+            "accept",
+            &session_id,
+            &HashMap::new(),
+            player_b,
+            player_a,
+        )
         .unwrap();
+    let accept_env = prepared.envelope;
+    let fallback = prepared.fallback_text;
     println!("Fallback: {fallback}");
 
     // Player A receives accept
     let result = router
         .dispatch_incoming(&accept_env, player_b, player_a)
         .unwrap();
-    if let Some(emit) = &result.emit {
+    if let IncomingDispatch::Applied(result) = result
+        && let Some(emit) = &result.emit
+    {
         println!("Event: {:?}", emit.get("type"));
     }
 
@@ -62,21 +87,25 @@ fn main() {
 
         let mut payload = HashMap::new();
         payload.insert("i".to_string(), rmpv::Value::Integer((*cell as i64).into()));
-
-        let (move_env, fallback) = router
-            .dispatch_outgoing("ttt", 1, "move", &session_id, &payload, player)
-            .unwrap();
-        println!("Fallback: {fallback}");
-
-        // Other player receives
         let other = if *player == player_a {
             player_b
         } else {
             player_a
         };
+
+        let prepared = router
+            .dispatch_outgoing_to("ttt", 1, "move", &session_id, &payload, player, other)
+            .unwrap();
+        let move_env = prepared.envelope;
+        let fallback = prepared.fallback_text;
+        println!("Fallback: {fallback}");
+
+        // Other player receives
         let result = router.dispatch_incoming(&move_env, player, other).unwrap();
 
-        if let Some(emit) = &result.emit {
+        if let IncomingDispatch::Applied(result) = result
+            && let Some(emit) = &result.emit
+        {
             if let Some(payload_val) = emit.get("payload") {
                 if let Some(board_val) = payload_val.get("b") {
                     println!("Board: {}", board_val.as_str().unwrap_or("?"));

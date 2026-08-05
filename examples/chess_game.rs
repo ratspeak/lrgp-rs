@@ -10,6 +10,7 @@
 
 use std::collections::HashMap;
 
+use lrgp::app_base::IncomingDispatch;
 use lrgp::apps::chess::ChessApp;
 #[cfg(feature = "test-helpers")]
 use lrgp::apps::chess::force_coin;
@@ -33,9 +34,19 @@ fn main() {
     let player_b = "cccc3333dddd4444";
 
     println!("=== A challenges B to Chess ===");
-    let (env, fallback) = router_a
-        .dispatch_outgoing("chess", 1, "challenge", "", &HashMap::new(), player_a)
+    let prepared = router_a
+        .dispatch_outgoing_to(
+            "chess",
+            1,
+            "challenge",
+            "",
+            &HashMap::new(),
+            player_a,
+            player_b,
+        )
         .unwrap();
+    let env = prepared.envelope;
+    let fallback = prepared.fallback_text;
     let session_id = value_as_str(env.get("s").unwrap()).unwrap().to_string();
     let bytes = pack_to_bytes(&env).unwrap();
     println!("Fallback: {fallback}");
@@ -48,9 +59,19 @@ fn main() {
         .unwrap();
 
     println!("\n=== B accepts ===");
-    let (accept_env, fallback) = router_b
-        .dispatch_outgoing("chess", 1, "accept", &session_id, &HashMap::new(), player_b)
+    let prepared = router_b
+        .dispatch_outgoing_to(
+            "chess",
+            1,
+            "accept",
+            &session_id,
+            &HashMap::new(),
+            player_b,
+            player_a,
+        )
         .unwrap();
+    let accept_env = prepared.envelope;
+    let fallback = prepared.fallback_text;
     let bytes = pack_to_bytes(&accept_env).unwrap();
     println!("Fallback: {fallback}");
     println!("Envelope: {} bytes", bytes.len());
@@ -61,9 +82,19 @@ fn main() {
     println!("\n=== A plays 1.e4 ===");
     let mut payload = HashMap::new();
     payload.insert("m".to_string(), rmpv::Value::String("e2e4".into()));
-    let (move_env, fallback) = router_a
-        .dispatch_outgoing("chess", 1, "move", &session_id, &payload, player_a)
+    let prepared = router_a
+        .dispatch_outgoing_to(
+            "chess",
+            1,
+            "move",
+            &session_id,
+            &payload,
+            player_a,
+            player_b,
+        )
         .unwrap();
+    let move_env = prepared.envelope;
+    let fallback = prepared.fallback_text;
     let bytes = pack_to_bytes(&move_env).unwrap();
     println!("Fallback: {fallback}");
     println!("Envelope: {} bytes", bytes.len());
@@ -71,7 +102,9 @@ fn main() {
     let result = router_b
         .dispatch_incoming(&move_env, player_a, player_b)
         .unwrap();
-    if let Some(emit) = &result.emit {
+    if let IncomingDispatch::Applied(result) = result
+        && let Some(emit) = &result.emit
+    {
         if let Some(ev_type) = emit.get("type") {
             println!("B inbound event: {ev_type:?}");
         }

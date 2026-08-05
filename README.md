@@ -12,7 +12,9 @@ LRGP enables turn-based and real-time multiplayer games to run over LoRa radios,
 - **`LrgpRouter`** — register games, dispatch moves, manage manifests
 - **`LrgpStore`** — SQLite persistence for game sessions and move history
 - **Transport bridge** — zero-copy conversion between LRGP envelopes and LXMF fields
-- **Replay protection** — every envelope carries an 8-byte CSPRNG nonce; receivers maintain a per-session bounded LRU (10-min TTL) and drop duplicates
+- **Replay protection** — every envelope carries an 8-byte CSPRNG nonce; receivers maintain identity-scoped bounded LRUs with an absolute 10-minute TTL
+- **Participant binding** — every session is bound to its authenticated remote peer before state-changing actions are accepted
+- **Bounded admission** — unsolicited pending challenges are capped per participant and local identity without evicting active games
 - **Built-in games** — Tic-Tac-Toe and Chess (via `cozy-chess`)
 
 ## Quick Start
@@ -80,7 +82,7 @@ fields[0xFB] = "lrgp.v1"                    # protocol marker
 fields[0xFD] = {                             # envelope (≤200 bytes)
     "a": "ttt.1",                            # game_id.version
     "c": "move",                             # command
-    "s": "a1b2c3d4e5f6g7h8",                # session_id (16-char hex)
+    "s": "a1b2c3d4e5f60718",                # session_id (16-char lowercase hex)
     "p": {"i": 4, "b": "____X____", ...},   # payload (game-specific)
     "n": <8 bytes>,                          # CSPRNG nonce (replay-dedup)
 }
@@ -90,7 +92,35 @@ Non-LRGP clients see human-readable fallback text (e.g., `"[LRGP TTT] Move 3"` o
 
 ### Replay protection
 
-Every outbound envelope carries an 8-byte CSPRNG nonce under key `n`. Receivers run each decoded envelope through `ReplayDedup::check`; the cache is a per-session LRU of `(session_id, nonce)` pairs bounded to 512 entries with a 10-minute TTL. Duplicates are reported as `DedupVerdict::Replay` and should be dropped silently. Drop the per-session cache via `drop_session(session_id)` when a game reaches a terminal state.
+Every outbound envelope carries an 8-byte CSPRNG nonce under key `n`. Receivers probe each validated envelope without insertion, authorize its transport sender, then atomically check-and-record it before application mutation. The cache is keyed by `(receiving_identity_id, session_id, nonce)`, bounded to 512 nonces per namespace and 1,024 namespaces, and uses an absolute 10-minute TTL from first observation. Duplicates are reported as `DedupVerdict::Replay` and dropped silently. Unauthorized fresh nonces never consume or evict cache entries. Terminal-session nonces remain until that TTL expires so late transport retransmits stay deduplicated; explicit user deletion may remove only the matching local identity/session namespace.
+
+`pack_envelope`, `pack_lxmf_fields`, and byte decoders are checked APIs. They reject non-canonical fields, unsupported lexical forms, oversize envelopes, and trailing bytes rather than placing malformed LRGP data on the wire.
+
+`pack_lxmf_fields` returns native MessagePack values. If an integration needs
+pre-encoded field bytes, use `transport::pack_into_preencoded_fields` and, with
+`lxmf-core::LxMessage`, install each value using `set_msgpack_field`.
+`LxMessage::set_field` is intentionally **not** compatible with this output: it
+would wrap the encoded string/map as MessagePack binary values, which Python
+LRGP peers do not interpret as LRGP fields.
+
+### Integration trust boundary
+
+Pass `LrgpRouter::dispatch_incoming` only the remote identity derived from
+authenticated LXMF/Reticulum delivery metadata. Never derive `sender_hash`
+from fallback text, an envelope field, or a display name. LRGP binds the value
+to a session and rejects later mismatches, but this transport-independent crate
+cannot authenticate an arbitrary caller-supplied string itself. Incoming
+dispatch rejects an empty sender or receiving identity before replay insertion
+or game mutation.
+
+For durable inbound processing, snapshot before dispatch. If the application
+mutation succeeds but its external database transaction fails, call
+`LrgpRouter::rollback_incoming` with that exact envelope nonce and snapshot.
+The method restores/deletes the live session and releases only the matching
+identity/session/nonce replay key so an exact transport retransmission can be
+applied safely. If durable recording of an authenticated
+`IncomingDispatch::RemoteError` fails, use `forget_incoming_nonce` instead:
+that result consumed a nonce but did not mutate game state.
 
 ## Protocol Spec
 
