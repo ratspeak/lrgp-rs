@@ -598,3 +598,64 @@ A move that delivers checkmate carries `x="win"`, `r="cm"`, and `w` = the mating
 ### Engine Notes
 
 The reference Rust implementation uses [cozy-chess](https://crates.io/crates/cozy-chess); the reference Python implementation uses [python-chess](https://pypi.org/project/chess/). Any chess library that implements legal-move generation, checkmate / stalemate / insufficient-material detection, and threefold / fifty-move-rule predicates can be substituted as long as it produces canonical UCI strings.
+
+---
+
+## C. Four in a Row Reference Game
+
+Four in a Row (`four_in_a_row.1`) is the built-in two-player gravity game.
+Its session type is `turn_based` and validation model is `both`. This appendix
+defines an LRGP reference application; it does not change the base LRGP
+protocol version.
+
+### Board and Player Assignment
+
+- The board has 7 columns and 6 rows. Columns are numbered `0..6` from left
+  to right. Rows are numbered `0..5` from top to bottom.
+- Local metadata stores exactly 42 ASCII cells in row-major order. Cell index
+  is `row * 7 + column`; `_` is empty and `A`/`B` are theme-neutral markers.
+- A move occupies the lowest empty cell in the selected column. A full column
+  is illegal. Four identical markers horizontally, vertically, or along
+  either diagonal wins.
+- The challenger is the first player, owns marker `A`, and takes move 1. The
+  responder owns marker `B`. Move number `n` is 1-based and alternates the
+  marker deterministically: odd=`A`, even=`B`.
+- Both peers reconstruct the board from the same starting state and accepted
+  column sequence. Board snapshots and next-turn identities are not sent in
+  move envelopes.
+
+### Canonical Command Payloads
+
+Inbound wire payloads MUST contain exactly the keys shown. Missing,
+additional, or incorrectly typed values MUST be rejected before mutation.
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{}` |
+| `accept` | `{t}` where `t` is the stored challenger/first-turn identity |
+| `decline` | `{}` |
+| non-terminal `move` | `{c, n, x}` with `c` in `0..6`, sequential `n`, and `x=""` |
+| winning `move` | `{c, n, x, w}` with `x="win"` and `w` equal to the authenticated mover |
+| drawn `move` | `{c, n, x}` with `x="draw"` on the full non-winning board |
+| `resign` | `{}` |
+| `draw_offer` | `{}` |
+| `draw_accept` | `{}` |
+| `draw_decline` | `{}` |
+
+The local outgoing API accepts exactly `{c}` for `move` and `{}` for every
+other action above. The implementation derives `n`, the landing row/cell,
+terminal claim, winner, and next turn. A receiver MUST independently apply
+gravity and reject a non-sequential move, full/out-of-range column, move by
+the wrong participant, false/missing terminal claim, forged winner, or any
+move after completion. `error` uses the global schema in Section 9.
+
+### Canonical Local Metadata
+
+The reference applications expose `board`, `turn`, `first_turn`, `my_marker`,
+`first_marker`, `second_marker`, `move_count`, `last_column`, `last_row`,
+`last_cell`, `winner`, `terminal`, `draw_offered`, and `draw_offered_by`.
+The three `last_*` values are null before move 1. `terminal` is `""`,
+`"win"`, `"draw"`, or `"resign"`; only the first three appear on move wire
+payloads. Persistence hydration MUST revalidate gravity, marker counts,
+move count, turn, last-move coordinates, terminal status, winner identity,
+and participant bindings before accepting a stored session.

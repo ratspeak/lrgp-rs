@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Four in a Row (`four_in_a_row.1`)** — built-in two-player 7x6 gravity
+  game with theme-neutral `A`/`B` markers and two-side deterministic
+  validation. Move envelopes carry only `{c, n, x}` (plus `w` for a win);
+  each peer reconstructs the canonical row-major board independently.
+- Cross-language binary fixtures and adversarial coverage for gravity, all
+  four win directions, full-board and negotiated draws, terminal claims,
+  participant authorization, persistence hydration, rollback, and wire size.
+
 ## 0.4.0 — 2026-08-04
 
 ### Breaking

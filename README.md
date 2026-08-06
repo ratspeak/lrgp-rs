@@ -15,7 +15,7 @@ LRGP enables turn-based and real-time multiplayer games to run over LoRa radios,
 - **Replay protection** — every envelope carries an 8-byte CSPRNG nonce; receivers maintain identity-scoped bounded LRUs with an absolute 10-minute TTL
 - **Participant binding** — every session is bound to its authenticated remote peer before state-changing actions are accepted
 - **Bounded admission** — unsolicited pending challenges are capped per participant and local identity without evicting active games
-- **Built-in games** — Tic-Tac-Toe and Chess (via `cozy-chess`)
+- **Built-in games** — Tic-Tac-Toe, Chess (via `cozy-chess`), and Four in a Row
 
 ## Quick Start
 
@@ -46,6 +46,7 @@ src/
   apps/
     tictactoe.rs   # Built-in Tic-Tac-Toe
     chess.rs       # Built-in Chess (cozy-chess engine, UCI wire format)
+    four_in_a_row.rs # Built-in 7x6 gravity game (reconstructed compact wire state)
 ```
 
 ## Building a Game
@@ -85,15 +86,15 @@ Every game move fits in a single LXMF OPPORTUNISTIC packet (≤295 bytes total):
 ```
 fields[0xFB] = "lrgp.v1"                    # protocol marker
 fields[0xFD] = {                             # envelope (≤200 bytes)
-    "a": "ttt.1",                            # game_id.version
+    "a": "four_in_a_row.1",                  # game_id.version
     "c": "move",                             # command
     "s": "a1b2c3d4e5f60718",                # session_id (16-char lowercase hex)
-    "p": {"i": 4, "b": "____X____", ...},   # payload (game-specific)
+    "p": {"c": 3, "n": 1, "x": ""},        # payload (game-specific)
     "n": <8 bytes>,                          # CSPRNG nonce (replay-dedup)
 }
 ```
 
-Non-LRGP clients see human-readable fallback text (e.g., `"[LRGP TTT] Move 3"` or `"[LRGP Chess] e2e4"`).
+Non-LRGP clients see human-readable fallback text (e.g., `"[LRGP TTT] Move 3"`, `"[LRGP Chess] e2e4"`, or `"[LRGP Four in a Row] Move 7"`).
 
 ### Replay protection
 
