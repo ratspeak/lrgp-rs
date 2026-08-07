@@ -102,11 +102,11 @@ fn main() {
     let result = router_b
         .dispatch_incoming(&move_env, player_a, player_b)
         .unwrap();
-    if let IncomingDispatch::Applied(result) = result
-        && let Some(emit) = &result.emit
-    {
-        if let Some(ev_type) = emit.get("type") {
-            println!("B inbound event: {ev_type:?}");
+    if let IncomingDispatch::Applied(result) = result {
+        if let Some(emit) = &result.emit {
+            if let Some(ev_type) = emit.get("type") {
+                println!("B inbound event: {ev_type:?}");
+            }
         }
     }
 

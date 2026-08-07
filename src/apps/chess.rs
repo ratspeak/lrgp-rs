@@ -43,10 +43,10 @@ static FORCED_COIN: Mutex<Option<bool>> = Mutex::new(None);
 fn flip_responder_coin() -> bool {
     #[cfg(any(test, feature = "test-helpers"))]
     {
-        if let Ok(guard) = FORCED_COIN.lock()
-            && let Some(v) = *guard
-        {
-            return v;
+        if let Ok(guard) = FORCED_COIN.lock() {
+            if let Some(v) = *guard {
+                return v;
+            }
         }
     }
     use rand::RngCore;
@@ -179,10 +179,10 @@ fn insufficient_material(board: &Board) -> bool {
         for sq in board.pieces(Piece::Bishop) & black {
             b_sq = Some(sq);
         }
-        if let (Some(ws), Some(bs)) = (w_sq, b_sq)
-            && square_is_light(ws) == square_is_light(bs)
-        {
-            return true;
+        if let (Some(ws), Some(bs)) = (w_sq, b_sq) {
+            if square_is_light(ws) == square_is_light(bs) {
+                return true;
+            }
         }
     }
     false
@@ -1198,22 +1198,25 @@ impl ChessApp {
             // On claim, pre-terminate locally so UI reflects immediately.
             if reason == R_THREEFOLD || reason == R_FIFTY_MOVE {
                 let moves = meta_string_list(&session.metadata, "moves");
-                if let Ok(board) = replay_moves(&moves)
-                    && claim_reason(&board, &moves) == Some(reason.as_str())
-                {
-                    let _ =
-                        SessionStateMachine::apply_command(&mut session, CMD_DRAW_ACCEPT, false);
-                    session
-                        .metadata
-                        .insert("terminal".into(), JsonValue::String("draw".into()));
-                    session
-                        .metadata
-                        .insert("terminal_reason".into(), JsonValue::String(reason.clone()));
-                    session
-                        .metadata
-                        .insert("turn".into(), JsonValue::String("".into()));
-                    session.clear_draw_offer();
-                    completed_claim = true;
+                if let Ok(board) = replay_moves(&moves) {
+                    if claim_reason(&board, &moves) == Some(reason.as_str()) {
+                        let _ = SessionStateMachine::apply_command(
+                            &mut session,
+                            CMD_DRAW_ACCEPT,
+                            false,
+                        );
+                        session
+                            .metadata
+                            .insert("terminal".into(), JsonValue::String("draw".into()));
+                        session
+                            .metadata
+                            .insert("terminal_reason".into(), JsonValue::String(reason.clone()));
+                        session
+                            .metadata
+                            .insert("turn".into(), JsonValue::String("".into()));
+                        session.clear_draw_offer();
+                        completed_claim = true;
+                    }
                 }
             }
             if !completed_claim {
@@ -1260,11 +1263,11 @@ impl ChessApp {
     }
 
     fn handle_draw_decline_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
-        if let Some(mut session) = self.get_session(session_id, identity_id)
-            && SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false).is_ok()
-        {
-            session.clear_draw_offer();
-            self.save_session(&session);
+        if let Some(mut session) = self.get_session(session_id, identity_id) {
+            if SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false).is_ok() {
+                session.clear_draw_offer();
+                self.save_session(&session);
+            }
         }
         OutgoingResult {
             payload: HashMap::new(),
@@ -1529,16 +1532,16 @@ impl GameApp for ChessApp {
         sender_hash: &str,
         identity_id: &str,
     ) -> IncomingResult {
-        if command != CMD_ERROR
-            && let Err(message) = self.validate_incoming_payload(
+        if command != CMD_ERROR {
+            if let Err(message) = self.validate_incoming_payload(
                 session_id,
                 command,
                 payload,
                 identity_id,
                 sender_hash,
-            )
-        {
-            return error_result(ERR_PROTOCOL_ERROR, &message);
+            ) {
+                return error_result(ERR_PROTOCOL_ERROR, &message);
+            }
         }
         match command {
             CMD_CHALLENGE => {
@@ -1820,14 +1823,13 @@ impl GameApp for ChessApp {
         SessionStateMachine::check_expiry(&mut session, Some(&Self::ttl_policy()), None);
         if session.draw_offered_by().is_none() {
             session.clear_draw_offer();
-        } else if let Some(owner) = session.draw_offered_by()
-            && owner != session.identity_id
-            && owner != session.contact_hash
-        {
-            return Err(LrgpError::Validation {
-                code: ERR_PROTOCOL_ERROR.into(),
-                message: "draw offer owner is not a bound participant".into(),
-            });
+        } else if let Some(owner) = session.draw_offered_by() {
+            if owner != session.identity_id && owner != session.contact_hash {
+                return Err(LrgpError::Validation {
+                    code: ERR_PROTOCOL_ERROR.into(),
+                    message: "draw offer owner is not a bound participant".into(),
+                });
+            }
         }
         self.save_session(&session);
         Ok(())

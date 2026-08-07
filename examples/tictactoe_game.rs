@@ -36,10 +36,10 @@ fn main() {
     // Player B receives the challenge
     println!("\n=== Player B receives challenge ===");
     let result = router.dispatch_incoming(&env, player_a, player_b).unwrap();
-    if let IncomingDispatch::Applied(result) = result
-        && let Some(emit) = &result.emit
-    {
-        println!("Event: {:?}", emit.get("type"));
+    if let IncomingDispatch::Applied(result) = result {
+        if let Some(emit) = &result.emit {
+            println!("Event: {:?}", emit.get("type"));
+        }
     }
 
     // Player B accepts
@@ -63,10 +63,10 @@ fn main() {
     let result = router
         .dispatch_incoming(&accept_env, player_b, player_a)
         .unwrap();
-    if let IncomingDispatch::Applied(result) = result
-        && let Some(emit) = &result.emit
-    {
-        println!("Event: {:?}", emit.get("type"));
+    if let IncomingDispatch::Applied(result) = result {
+        if let Some(emit) = &result.emit {
+            println!("Event: {:?}", emit.get("type"));
+        }
     }
 
     // Play some moves
@@ -103,12 +103,12 @@ fn main() {
         // Other player receives
         let result = router.dispatch_incoming(&move_env, player, other).unwrap();
 
-        if let IncomingDispatch::Applied(result) = result
-            && let Some(emit) = &result.emit
-        {
-            if let Some(payload_val) = emit.get("payload") {
-                if let Some(board_val) = payload_val.get("b") {
-                    println!("Board: {}", board_val.as_str().unwrap_or("?"));
+        if let IncomingDispatch::Applied(result) = result {
+            if let Some(emit) = &result.emit {
+                if let Some(payload_val) = emit.get("payload") {
+                    if let Some(board_val) = payload_val.get("b") {
+                        println!("Board: {}", board_val.as_str().unwrap_or("?"));
+                    }
                 }
             }
         }

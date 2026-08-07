@@ -234,10 +234,10 @@ impl ReplayDedup {
 
     pub fn forget_scoped_nonce(&mut self, identity_id: &str, session_id: &str, nonce: &[u8]) {
         let key = (identity_id.to_string(), session_id.to_string());
-        if let Some(cache) = self.by_session.get_mut(&key)
-            && let Some(position) = cache.position(nonce)
-        {
-            cache.entries.remove(position);
+        if let Some(cache) = self.by_session.get_mut(&key) {
+            if let Some(position) = cache.position(nonce) {
+                cache.entries.remove(position);
+            }
         }
         if self
             .by_session

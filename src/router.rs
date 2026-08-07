@@ -135,12 +135,14 @@ impl LrgpRouter {
             return Ok(IncomingDispatch::Replay);
         }
 
-        if validated.command == CMD_CHALLENGE
-            && let Some((owner_app, _)) =
+        if validated.command == CMD_CHALLENGE {
+            if let Some((owner_app, _)) =
                 self.find_session_owner(&validated.session_id, identity_id)
-            && owner_app != validated.app_id
-        {
-            return Err(LrgpError::SessionExists(validated.session_id));
+            {
+                if owner_app != validated.app_id {
+                    return Err(LrgpError::SessionExists(validated.session_id));
+                }
+            }
         }
 
         if validated.command == CMD_ERROR {
@@ -319,12 +321,12 @@ impl LrgpRouter {
             if session.contact_hash.is_empty() {
                 return Err(LrgpError::ParticipantRequired);
             }
-            if let Some(recipient) = recipient_hash
-                && recipient != session.contact_hash
-            {
-                return Err(LrgpError::UnauthorizedPeer {
-                    session_id: session.session_id,
-                });
+            if let Some(recipient) = recipient_hash {
+                if recipient != session.contact_hash {
+                    return Err(LrgpError::UnauthorizedPeer {
+                        session_id: session.session_id,
+                    });
+                }
             }
 
             if command != CMD_ERROR {
@@ -362,15 +364,15 @@ impl LrgpRouter {
             app.handle_outgoing(&effective_session_id, command, payload, identity_id)
         };
 
-        if command == CMD_CHALLENGE
-            && let Err(error) = app.bind_session_peer(
+        if command == CMD_CHALLENGE {
+            if let Err(error) = app.bind_session_peer(
                 &effective_session_id,
                 identity_id,
                 recipient_hash.expect("challenge recipient checked above"),
-            )
-        {
-            app.rollback_session(&effective_session_id, identity_id, snapshot);
-            return Err(error);
+            ) {
+                app.rollback_session(&effective_session_id, identity_id, snapshot);
+                return Err(error);
+            }
         }
 
         let final_envelope = envelope::pack_envelope(
@@ -501,9 +503,10 @@ impl LrgpRouter {
         let _creation_guard = self.session_creation.lock().unwrap();
         if let Some((owner_app, _)) =
             self.find_session_owner(&session.session_id, &session.identity_id)
-            && owner_app != session.app_id
         {
-            return Err(LrgpError::SessionExists(session.session_id));
+            if owner_app != session.app_id {
+                return Err(LrgpError::SessionExists(session.session_id));
+            }
         }
         app.upsert_session(session)
     }

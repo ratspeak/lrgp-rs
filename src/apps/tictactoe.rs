@@ -758,11 +758,11 @@ impl TicTacToeApp {
     }
 
     fn handle_draw_offer_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
-        if let Some(mut session) = self.get_session(session_id, identity_id)
-            && SessionStateMachine::apply_command(&mut session, CMD_DRAW_OFFER, false).is_ok()
-        {
-            session.set_draw_offer(identity_id);
-            self.save_session(&session);
+        if let Some(mut session) = self.get_session(session_id, identity_id) {
+            if SessionStateMachine::apply_command(&mut session, CMD_DRAW_OFFER, false).is_ok() {
+                session.set_draw_offer(identity_id);
+                self.save_session(&session);
+            }
         }
         OutgoingResult {
             payload: HashMap::new(),
@@ -786,11 +786,11 @@ impl TicTacToeApp {
     }
 
     fn handle_draw_decline_out(&self, session_id: &str, identity_id: &str) -> OutgoingResult {
-        if let Some(mut session) = self.get_session(session_id, identity_id)
-            && SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false).is_ok()
-        {
-            session.clear_draw_offer();
-            self.save_session(&session);
+        if let Some(mut session) = self.get_session(session_id, identity_id) {
+            if SessionStateMachine::apply_command(&mut session, CMD_DRAW_DECLINE, false).is_ok() {
+                session.clear_draw_offer();
+                self.save_session(&session);
+            }
         }
         OutgoingResult {
             payload: HashMap::new(),
@@ -1051,11 +1051,12 @@ impl GameApp for TicTacToeApp {
         sender_hash: &str,
         identity_id: &str,
     ) -> IncomingResult {
-        if command != CMD_ERROR
-            && let Err(message) =
+        if command != CMD_ERROR {
+            if let Err(message) =
                 self.validate_incoming_payload(session_id, command, payload, identity_id)
-        {
-            return error_result(ERR_PROTOCOL_ERROR, &message);
+            {
+                return error_result(ERR_PROTOCOL_ERROR, &message);
+            }
         }
         match command {
             CMD_CHALLENGE => {
@@ -1270,14 +1271,13 @@ impl GameApp for TicTacToeApp {
             // Pre-owner persisted records and stray owner metadata cannot
             // safely authorize a response.
             session.clear_draw_offer();
-        } else if let Some(owner) = session.draw_offered_by()
-            && owner != session.identity_id
-            && owner != session.contact_hash
-        {
-            return Err(LrgpError::Validation {
-                code: ERR_PROTOCOL_ERROR.into(),
-                message: "draw offer owner is not a bound participant".into(),
-            });
+        } else if let Some(owner) = session.draw_offered_by() {
+            if owner != session.identity_id && owner != session.contact_hash {
+                return Err(LrgpError::Validation {
+                    code: ERR_PROTOCOL_ERROR.into(),
+                    message: "draw offer owner is not a bound participant".into(),
+                });
+            }
         }
         self.save_session(&session);
         Ok(())

@@ -1106,11 +1106,12 @@ impl GameApp for FourInARowApp {
         sender_hash: &str,
         identity_id: &str,
     ) -> IncomingResult {
-        if command != CMD_ERROR
-            && let Err(message) =
+        if command != CMD_ERROR {
+            if let Err(message) =
                 self.validate_wire_payload(session_id, command, payload, identity_id)
-        {
-            return error_result(ERR_PROTOCOL_ERROR, &message);
+            {
+                return error_result(ERR_PROTOCOL_ERROR, &message);
+            }
         }
         match command {
             CMD_CHALLENGE => self.handle_challenge_in(session_id, sender_hash, identity_id),
