@@ -1,4 +1,7 @@
 /target
-api-fixtures/target/
+api/fixtures/target/
 Cargo.lock
-!api-fixtures/Cargo.lock
+!api/fixtures/Cargo.lock
+!api/snapshots/Cargo.lock
+__pycache__/
+*.pyc

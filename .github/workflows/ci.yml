@@ -39,7 +39,7 @@ jobs:
       - name: Check additions-only compatibility floor
         run: python3 tools/check-api-compatibility.py
       - name: Check canonical and retained external consumers
-        run: cargo check --manifest-path api-fixtures/Cargo.toml --locked
+        run: cargo check --manifest-path api/fixtures/Cargo.toml --locked
 
   quality:
     name: Test and lint

@@ -31,7 +31,7 @@ for game in router.list_apps() {
 ```
 
 For envelope construction, validation, and LXMF embedding, use the provisional
-[`lrgp::protocol`](PROTOCOL_API.md) facade. Router, game, session, and store
+[`lrgp::protocol`](api/README.md) facade. Router, game, session, and store
 APIs remain module-qualified because their long-term ownership boundary is not
 being stabilized by this facade.
 
