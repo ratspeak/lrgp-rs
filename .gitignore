@@ -1,2 +1,4 @@
 /target
+api-fixtures/target/
 Cargo.lock
+!api-fixtures/Cargo.lock

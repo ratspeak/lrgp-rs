@@ -4,6 +4,10 @@
 
 ### Added
 
+- Add the exact-reexport `lrgp::protocol` facade for provisional envelope,
+  validation, and LXMF embedding APIs while retaining all existing paths and
+  leaving router, session, and persistence boundaries unchanged.
+
 - A pinned public API compatibility snapshot and package stability ledger;
   `lrgp` remains provisional and no visibility or signature changed.
 - **Four in a Row (`four_in_a_row.1`)** — built-in two-player 7x6 gravity

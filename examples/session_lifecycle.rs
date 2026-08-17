@@ -1,6 +1,6 @@
 //! Demonstrates the LRGP game session state machine.
 
-use lrgp::constants::*;
+use lrgp::protocol::{CMD_ACCEPT, CMD_CHALLENGE, CMD_DECLINE, CMD_MOVE};
 use lrgp::session::{Session, SessionStateMachine};
 
 fn main() {

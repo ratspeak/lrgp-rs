@@ -14,7 +14,7 @@ use lrgp::app_base::IncomingDispatch;
 use lrgp::apps::chess::ChessApp;
 #[cfg(feature = "test-helpers")]
 use lrgp::apps::chess::force_coin;
-use lrgp::envelope::{pack_to_bytes, value_as_str};
+use lrgp::protocol::{pack_to_bytes, value_as_str};
 use lrgp::router::LrgpRouter;
 
 fn router() -> LrgpRouter {

@@ -2,8 +2,7 @@
 
 use std::collections::HashMap;
 
-use lrgp::constants::*;
-use lrgp::envelope::*;
+use lrgp::protocol::*;
 
 fn main() {
     // Pack a challenge envelope

@@ -30,6 +30,11 @@ for game in router.list_apps() {
 }
 ```
 
+For envelope construction, validation, and LXMF embedding, use the provisional
+[`lrgp::protocol`](PROTOCOL_API.md) facade. Router, game, session, and store
+APIs remain module-qualified because their long-term ownership boundary is not
+being stabilized by this facade.
+
 ## Architecture
 
 ```
@@ -100,10 +105,13 @@ Non-LRGP clients see human-readable fallback text (e.g., `"[LRGP TTT] Move 3"`, 
 
 Every outbound envelope carries an 8-byte CSPRNG nonce under key `n`. Receivers probe each validated envelope without insertion, authorize its transport sender, then atomically check-and-record it before application mutation. The cache is keyed by `(receiving_identity_id, session_id, nonce)`, bounded to 512 nonces per namespace and 1,024 namespaces, and uses an absolute 10-minute TTL from first observation. Duplicates are reported as `DedupVerdict::Replay` and dropped silently. Unauthorized fresh nonces never consume or evict cache entries. Terminal-session nonces remain until that TTL expires so late transport retransmits stay deduplicated; explicit user deletion may remove only the matching local identity/session namespace.
 
-`pack_envelope`, `pack_lxmf_fields`, and byte decoders are checked APIs. They reject non-canonical fields, unsupported lexical forms, oversize envelopes, and trailing bytes rather than placing malformed LRGP data on the wire.
+`protocol::pack_envelope`, `protocol::pack_lxmf_fields`, and byte decoders are
+checked APIs. They reject non-canonical fields, unsupported lexical forms,
+oversize envelopes, and trailing bytes rather than placing malformed LRGP data
+on the wire.
 
 `pack_lxmf_fields` returns native MessagePack values. If an integration needs
-pre-encoded field bytes, use `transport::pack_into_preencoded_fields` and, with
+pre-encoded field bytes, use `protocol::pack_into_preencoded_fields` and, with
 `lxmf-core::LxMessage`, install each value using `set_msgpack_field`.
 `LxMessage::set_field` is intentionally **not** compatible with this output: it
 would wrap the encoded string/map as MessagePack binary values, which Python

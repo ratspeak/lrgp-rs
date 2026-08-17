@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "scope": "library Cargo manifests, public features, targets, and non-dev dependencies",
+  "packages": [
+    {
+      "name": "lrgp",
+      "version": "0.4.0",
+      "rustVersion": "1.87",
+      "edition": "2024",
+      "features": {
+        "default": [],
+        "test-helpers": []
+      },
+      "targets": [
+        {
+          "name": "lrgp",
+          "kind": [
+            "lib"
+          ],
+          "crateTypes": [
+            "lib"
+          ],
+          "requiredFeatures": []
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "cozy-chess",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^0.3.4",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "hex",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^0.4",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "rand",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^0.8",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "rmp-serde",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^1",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "rmpv",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^1",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "rusqlite",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^0.32",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "bundled"
+          ],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "serde",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^1",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [
+            "derive"
+          ],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "serde_json",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^1",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "thiserror",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^2",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "tracing",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^0.1",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        }
+      ]
+    }
+  ]
+}

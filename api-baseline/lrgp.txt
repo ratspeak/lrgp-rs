@@ -327,6 +327,85 @@ pub lrgp::errors::LrgpError::UnsupportedVersion::supported: u32
 pub lrgp::errors::LrgpError::Validation
 pub lrgp::errors::LrgpError::Validation::code: alloc::string::String
 pub lrgp::errors::LrgpError::Validation::message: alloc::string::String
+pub mod lrgp::protocol
+pub use lrgp::protocol::Value
+pub enum lrgp::protocol::LrgpError
+pub lrgp::protocol::LrgpError::AdmissionLimit
+pub lrgp::protocol::LrgpError::AdmissionLimit::limit: usize
+pub lrgp::protocol::LrgpError::AdmissionLimit::scope: &'static str
+pub lrgp::protocol::LrgpError::AuthenticatedSenderRequired
+pub lrgp::protocol::LrgpError::EnvelopeTooLarge(usize, usize)
+pub lrgp::protocol::LrgpError::IllegalTransition
+pub lrgp::protocol::LrgpError::IllegalTransition::command: alloc::string::String
+pub lrgp::protocol::LrgpError::IllegalTransition::status: alloc::string::String
+pub lrgp::protocol::LrgpError::InvalidEnvelope(alloc::string::String)
+pub lrgp::protocol::LrgpError::OutgoingIdentityRequired
+pub lrgp::protocol::LrgpError::ParticipantRequired
+pub lrgp::protocol::LrgpError::ReceivingIdentityRequired
+pub lrgp::protocol::LrgpError::SessionExists(alloc::string::String)
+pub lrgp::protocol::LrgpError::SessionExpired(alloc::string::String)
+pub lrgp::protocol::LrgpError::SessionNotFound(alloc::string::String)
+pub lrgp::protocol::LrgpError::Store(alloc::string::String)
+pub lrgp::protocol::LrgpError::UnauthorizedPeer
+pub lrgp::protocol::LrgpError::UnauthorizedPeer::session_id: alloc::string::String
+pub lrgp::protocol::LrgpError::UnknownApp(alloc::string::String)
+pub lrgp::protocol::LrgpError::UnsupportedAction
+pub lrgp::protocol::LrgpError::UnsupportedAction::app_id: alloc::string::String
+pub lrgp::protocol::LrgpError::UnsupportedAction::command: alloc::string::String
+pub lrgp::protocol::LrgpError::UnsupportedVersion
+pub lrgp::protocol::LrgpError::UnsupportedVersion::app_id: alloc::string::String
+pub lrgp::protocol::LrgpError::UnsupportedVersion::received: u32
+pub lrgp::protocol::LrgpError::UnsupportedVersion::supported: u32
+pub lrgp::protocol::LrgpError::Validation
+pub lrgp::protocol::LrgpError::Validation::code: alloc::string::String
+pub lrgp::protocol::LrgpError::Validation::message: alloc::string::String
+pub struct lrgp::protocol::ValidatedEnvelope
+pub lrgp::protocol::ValidatedEnvelope::app_id: alloc::string::String
+pub lrgp::protocol::ValidatedEnvelope::command: alloc::string::String
+pub lrgp::protocol::ValidatedEnvelope::nonce: [u8; 8]
+pub lrgp::protocol::ValidatedEnvelope::payload: std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>
+pub lrgp::protocol::ValidatedEnvelope::session_id: alloc::string::String
+pub lrgp::protocol::ValidatedEnvelope::version: u32
+pub const lrgp::protocol::CMD_ACCEPT: &str
+pub const lrgp::protocol::CMD_CHALLENGE: &str
+pub const lrgp::protocol::CMD_DECLINE: &str
+pub const lrgp::protocol::CMD_DRAW_ACCEPT: &str
+pub const lrgp::protocol::CMD_DRAW_DECLINE: &str
+pub const lrgp::protocol::CMD_DRAW_OFFER: &str
+pub const lrgp::protocol::CMD_ERROR: &str
+pub const lrgp::protocol::CMD_MOVE: &str
+pub const lrgp::protocol::CMD_RESIGN: &str
+pub const lrgp::protocol::ENVELOPE_MAX_PACKED: usize
+pub const lrgp::protocol::FIELD_CUSTOM_META: u8
+pub const lrgp::protocol::FIELD_CUSTOM_TYPE: u8
+pub const lrgp::protocol::KEY_APP: &str
+pub const lrgp::protocol::KEY_COMMAND: &str
+pub const lrgp::protocol::KEY_NONCE: &str
+pub const lrgp::protocol::KEY_PAYLOAD: &str
+pub const lrgp::protocol::KEY_SESSION: &str
+pub const lrgp::protocol::NONCE_BYTES: usize
+pub const lrgp::protocol::PROTOCOL_TYPE: &str
+pub fn lrgp::protocol::extract_envelope(&std::collections::hash::map::HashMap<u8, alloc::vec::Vec<u8>>) -> core::result::Result<core::option::Option<lrgp::envelope::Envelope>, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::generate_nonce() -> [u8; 8]
+pub fn lrgp::protocol::generate_session_id() -> alloc::string::String
+pub fn lrgp::protocol::is_lrgp_message(&std::collections::hash::map::HashMap<u8, alloc::vec::Vec<u8>>) -> bool
+pub fn lrgp::protocol::is_valid_app_id(&str) -> bool
+pub fn lrgp::protocol::is_valid_command(&str) -> bool
+pub fn lrgp::protocol::is_valid_session_id(&str) -> bool
+pub fn lrgp::protocol::pack_envelope(&str, u32, &str, &str, core::option::Option<std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>>, core::option::Option<[u8; 8]>) -> core::result::Result<lrgp::envelope::Envelope, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::pack_into_preencoded_fields(&lrgp::envelope::Envelope) -> core::result::Result<std::collections::hash::map::HashMap<u8, alloc::vec::Vec<u8>>, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::pack_lxmf_fields(&lrgp::envelope::Envelope) -> core::result::Result<std::collections::hash::map::HashMap<u8, rmpv::Value>, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::pack_to_bytes(&lrgp::envelope::Envelope) -> core::result::Result<alloc::vec::Vec<u8>, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::parse_app_version(&str) -> core::option::Option<(&str, u32)>
+pub fn lrgp::protocol::unpack_envelope(&std::collections::hash::map::HashMap<u8, rmpv::Value>) -> core::result::Result<core::option::Option<lrgp::envelope::Envelope>, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::unpack_from_bytes(&[u8]) -> core::result::Result<lrgp::envelope::Envelope, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::validate_envelope(&lrgp::envelope::Envelope) -> core::result::Result<lrgp::envelope::ValidatedEnvelope, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::validate_envelope_size(&lrgp::envelope::Envelope) -> core::result::Result<usize, lrgp::errors::LrgpError>
+pub fn lrgp::protocol::value_as_bool(&rmpv::Value) -> core::option::Option<bool>
+pub fn lrgp::protocol::value_as_i64(&rmpv::Value) -> core::option::Option<i64>
+pub fn lrgp::protocol::value_as_str(&rmpv::Value) -> core::option::Option<&str>
+pub fn lrgp::protocol::value_as_u64(&rmpv::Value) -> core::option::Option<u64>
+pub type lrgp::protocol::Envelope = std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>
 pub mod lrgp::router
 pub struct lrgp::router::LrgpRouter
 impl lrgp::router::LrgpRouter

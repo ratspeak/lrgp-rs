@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use lrgp::app_base::IncomingDispatch;
 use lrgp::apps::tictactoe::TicTacToeApp;
-use lrgp::envelope::value_as_str;
+use lrgp::protocol::value_as_str;
 use lrgp::router::LrgpRouter;
 
 fn main() {

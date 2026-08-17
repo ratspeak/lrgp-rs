@@ -15,6 +15,15 @@
     "capturedOn": "2026-08-17"
   },
   "baselineLockfile": "api-baseline/Cargo.lock",
+  "compatibilityFloor": {
+    "evidenceCommit": "68b4d546cc9dd55693cda8ae8b0b54ecdfc3b14f",
+    "sourceCommit": "2b502a0eee94d92a717b45553815b5e46c3c5ccb"
+  },
+  "snapshotSource": {
+    "basisCommit": "68b4d546cc9dd55693cda8ae8b0b54ecdfc3b14f",
+    "capturedOn": "2026-08-17",
+    "changeRecord": "api-reviews/wave-c-protocol.json"
+  },
   "packages": [
     {
       "name": "lrgp",
@@ -22,8 +31,8 @@
       "tier": "provisional",
       "compatibility": "reviewed-snapshot",
       "snapshot": "api-baseline/lrgp.txt",
-      "itemCount": 402,
-      "sha256": "ece92ae9fe0fd3312095ec8d55f6d940617e3ab9b0a12194af0f1bdef7265517"
+      "itemCount": 481,
+      "sha256": "7330a04f987a7818eb1349841388d92847d49a76091a16710dc1f47090b271ff"
     }
   ]
 }

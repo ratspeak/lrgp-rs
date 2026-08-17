@@ -34,6 +34,12 @@ jobs:
         run: cargo install cargo-public-api --version 0.52.0 --locked
       - name: Check reviewed public API baseline
         run: python3 tools/check-api-baseline.py
+      - name: Check manifest and feature contract
+        run: python3 tools/check-api-manifest.py
+      - name: Check additions-only compatibility floor
+        run: python3 tools/check-api-compatibility.py
+      - name: Check canonical and retained external consumers
+        run: cargo check --manifest-path api-fixtures/Cargo.toml --locked
 
   quality:
     name: Test and lint
@@ -59,6 +65,12 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Run tests
         run: cargo test --all-features
+      - name: Build examples
+        run: cargo check --examples --all-features
+      - name: Check public API documentation
+        run: cargo doc --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: "-D warnings"
 
   msrv:
     name: Rust 1.87 MSRV

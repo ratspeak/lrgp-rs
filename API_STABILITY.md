@@ -10,6 +10,13 @@ baseline. CI regenerates the full explicit public surface with pinned
 This protects source users from accidental breakage without pretending that a
 0.x package has already completed its API design.
 
+[`lrgp::protocol`](PROTOCOL_API.md) is the canonical provisional path for
+LRGP-01 envelope, validation, and LXMF embedding identities. It consists only
+of exact re-exports. Router/application/session/persistence ownership,
+replay-cache machinery, built-in implementations, map-conversion helpers, and
+the deprecated ambiguous transport helper remain module-qualified provisional
+APIs. Every original path remains supported and no deprecation is added.
+
 lrgp-rs intentionally does not commit a root `Cargo.lock`, because ordinary CI
 qualifies the dependency ranges seen by library consumers. Reproducible API
 evidence has a narrower need: `api-baseline/Cargo.lock` pins only the tool's
@@ -29,6 +36,14 @@ auto-derived, auto-trait, and blanket implementations.
 cargo install cargo-public-api --version 0.52.0 --locked
 rustup toolchain install nightly-2026-08-01 --profile minimal
 python3 tools/check-api-baseline.py
+python3 tools/check-api-manifest.py
+python3 tools/check-api-compatibility.py
+cargo check --manifest-path api-fixtures/Cargo.toml --locked
 ```
+
+The immutable compatibility floor is separate from the current reviewed
+capture. The manifest contract covers features, targets, MSRV, and
+non-development dependencies that the Apple/all-feature snapshot cannot see.
+The compatibility check permits additions only in this Wave C slice.
 
 Use `--update` only after reviewing and recording the compatibility impact.
