@@ -70,4 +70,10 @@ for workflow_path in sorted([*workflows.glob("*.yml"), *workflows.glob("*.yaml")
                 f"({workflow_path.name}): {action}"
             )
 
+subprocess.run(
+    [sys.executable, "tools/check-api-baseline.py", "--metadata-only"],
+    cwd=ROOT,
+    check=True,
+)
+
 print("source-release contract: ok")

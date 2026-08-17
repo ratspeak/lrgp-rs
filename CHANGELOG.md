@@ -4,6 +4,8 @@
 
 ### Added
 
+- A pinned public API compatibility snapshot and package stability ledger;
+  `lrgp` remains provisional and no visibility or signature changed.
 - **Four in a Row (`four_in_a_row.1`)** — built-in two-player 7x6 gravity
   game with theme-neutral `A`/`B` markers and two-side deterministic
   validation. Move envelopes carry only `{c, n, x}` (plus `w` for a win);

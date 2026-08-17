@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "name": "cargo-public-api",
+    "version": "0.52.0",
+    "rustdocToolchain": "nightly-2026-08-01",
+    "target": "aarch64-apple-darwin",
+    "arguments": [
+      "--all-features",
+      "-sss"
+    ]
+  },
+  "baseline": {
+    "commit": "2b502a0eee94d92a717b45553815b5e46c3c5ccb",
+    "capturedOn": "2026-08-17"
+  },
+  "baselineLockfile": "api-baseline/Cargo.lock",
+  "packages": [
+    {
+      "name": "lrgp",
+      "manifestPath": "Cargo.toml",
+      "tier": "provisional",
+      "compatibility": "reviewed-snapshot",
+      "snapshot": "api-baseline/lrgp.txt",
+      "itemCount": 402,
+      "sha256": "ece92ae9fe0fd3312095ec8d55f6d940617e3ab9b0a12194af0f1bdef7265517"
+    }
+  ]
+}
