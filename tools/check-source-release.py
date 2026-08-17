@@ -11,7 +11,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_MSRV = "1.85"
+EXPECTED_MSRV = "1.87"
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
 

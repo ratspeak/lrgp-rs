@@ -29,7 +29,7 @@ cargo test --all-features
 lrgp-rs intentionally does not commit `Cargo.lock`: as a library, it is tested
 against dependency versions selected from its declared compatibility ranges.
 Applications such as Ratspeak provide the lockfile that freezes the deployed
-dependency graph. Rust 1.85 remains the declared minimum and is checked
+dependency graph. Rust 1.87 remains the declared minimum and is checked
 separately in CI.
 
 Tag creation, artifact upload, registry publication, and downstream integration
