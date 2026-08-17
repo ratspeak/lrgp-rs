@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.1 — 2026-08-17
+
 ### Added
 
 - Add the exact-reexport `lrgp::protocol` facade for provisional envelope,
