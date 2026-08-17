@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "snapshotSourceCommit": "aee4c5456341d0e69a9ae67d7c94f3f247a3fb73",
   "capabilities": ["LRGP-01"],
   "canonicalPath": "lrgp::protocol",
   "retainedPaths": [

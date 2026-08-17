@@ -20,7 +20,7 @@
     "sourceCommit": "2b502a0eee94d92a717b45553815b5e46c3c5ccb"
   },
   "snapshotSource": {
-    "basisCommit": "68b4d546cc9dd55693cda8ae8b0b54ecdfc3b14f",
+    "commit": "aee4c5456341d0e69a9ae67d7c94f3f247a3fb73",
     "capturedOn": "2026-08-17",
     "changeRecord": "api-reviews/wave-c-protocol.json"
   },
