@@ -28,8 +28,8 @@ verifier installs it temporarily and restores the normal root state.
 
 The `api/` directory contains the evidence used by CI:
 
-- `stability.json` records the package tier, source commits, snapshot hash, and
-  current review decision;
+- `stability.json` records package tiers, compatibility baselines, and snapshot
+  hashes;
 - `snapshots/` records the explicit all-feature Apple ARM64 Rust API, its lock,
   and the manifest, feature, dependency, target, and MSRV contract; and
 - `fixtures/` compiles recommended and retained imports as an external
@@ -49,6 +49,7 @@ python3 tools/check-api-compatibility.py
 cargo check --manifest-path api/fixtures/Cargo.toml --locked
 ```
 
-Snapshot updates require a clean source commit and an explicit review recorded
-in `api/stability.json`. Additions, removals, deprecations, platform impact, and
-version consequences must be reviewed before accepting new evidence.
+After reviewing an API change, run
+`python3 tools/check-api-baseline.py --update` and commit the source and snapshot
+changes together. CI compares snapshots with the current source; compatibility
+checks retain the historical baseline.
