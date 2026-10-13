@@ -112,8 +112,8 @@ on the wire.
 
 `pack_lxmf_fields` returns native MessagePack values. If an integration needs
 pre-encoded field bytes, use `protocol::pack_into_preencoded_fields` and, with
-`lxmf-core::LxMessage`, install each value using `set_msgpack_field`.
-`LxMessage::set_field` is intentionally **not** compatible with this output: it
+`lxmf-core::message_api::LxMessageDraft`, install each value using `set_msgpack_field`.
+`LxMessageDraft::set_field` is intentionally **not** compatible with this output: it
 would wrap the encoded string/map as MessagePack binary values, which Python
 LRGP peers do not interpret as LRGP fields.
 

@@ -7,7 +7,7 @@
 //! # Important: native MessagePack fields
 //!
 //! The returned byte values each encode **one complete native MessagePack
-//! value**. With `lxmf-core::LxMessage`, install them using
+//! value**. With `lxmf-core::message_api::LxMessageDraft`, install them using
 //! `set_msgpack_field`, never `set_field`. `set_field` represents its input as
 //! a MessagePack binary value, which would put `bin("lrgp.v1")` and
 //! `bin(<encoded map>)` on the wire instead of the LRGP string and map. Python
@@ -84,8 +84,8 @@ pub fn extract_envelope(fields: &HashMap<u8, Vec<u8>>) -> Result<Option<Envelope
 ///   - `0xFD` → msgpack(envelope dict)
 ///
 /// Each byte vector MUST be installed as a pre-encoded native MessagePack
-/// field (for `lxmf-core`, call `LxMessage::set_msgpack_field`). Passing these
-/// bytes to `LxMessage::set_field` creates non-interoperable binary wrappers.
+/// field (for `lxmf-core`, call `LxMessageDraft::set_msgpack_field`). Passing these
+/// bytes to `LxMessageDraft::set_field` creates non-interoperable binary wrappers.
 ///
 /// Always uses the current protocol marker (`lrgp.v1`) for outbound messages.
 pub fn pack_into_preencoded_fields(envelope: &Envelope) -> Result<HashMap<u8, Vec<u8>>, LrgpError> {
@@ -105,10 +105,10 @@ pub fn pack_into_preencoded_fields(envelope: &Envelope) -> Result<HashMap<u8, Ve
 ///
 /// The output is not arbitrary field data: each value is already encoded as
 /// one native MessagePack object and must be passed to a MessagePack-aware
-/// field setter such as `LxMessage::set_msgpack_field`.
+/// field setter such as `LxMessageDraft::set_msgpack_field`.
 #[deprecated(
     since = "0.4.0",
-    note = "use pack_into_preencoded_fields and LxMessage::set_msgpack_field"
+    note = "use pack_into_preencoded_fields and LxMessageDraft::set_msgpack_field"
 )]
 pub fn pack_into_fields(envelope: &Envelope) -> Result<HashMap<u8, Vec<u8>>, LrgpError> {
     pack_into_preencoded_fields(envelope)

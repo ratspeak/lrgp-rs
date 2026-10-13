@@ -29,7 +29,7 @@ The two field values are native MessagePack values in the LXMF field map: `0xFB`
 is a MessagePack string and `0xFD` is a MessagePack map. An implementation MUST
 NOT first encode either value and then insert those bytes through an API that
 wraps arbitrary bytes as MessagePack binary. Such `bin("lrgp.v1")` and
-`bin(<encoded envelope>)` wrappers are not LRGP. With `lxmf-core::LxMessage`,
+`bin(<encoded envelope>)` wrappers are not LRGP. With `lxmf-core::message_api::LxMessageDraft`,
 pre-encoded values MUST be installed with `set_msgpack_field`, not `set_field`.
 
 ---
