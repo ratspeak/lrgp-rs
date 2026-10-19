@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- **Checkers (`checkers.1`)** — built-in American checkers / English
+  draughts with mandatory captures, completed multi-jumps, crowning that ends
+  the move, and two-side validation by replay. Move envelopes carry a
+  space-separated square path such as `a5 c3 e1` in `{m, n, x}` (plus `r`/`w`
+  for a win); threefold-repetition and forty-move draws are claim-based.
+  Hydration replays the stored history and rejects inconsistent records.
+- Cross-language Checkers binary fixtures and a 33-ply reference game shared
+  with `lrgp-py`; both engines must agree on every legal-move list and on
+  the final winning payload.
+
 ## 0.4.1 — 2026-08-17
 
 ### Added

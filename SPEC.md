@@ -666,3 +666,122 @@ The three `last_*` values are null before move 1. `terminal` is `""`,
 payloads. Persistence hydration MUST revalidate gravity, marker counts,
 move count, turn, last-move coordinates, terminal status, winner identity,
 and participant bindings before accepting a stored session.
+
+---
+
+## D. Checkers Reference Game
+
+Checkers (`checkers.1`) is the built-in American checkers / English draughts
+implementation. App ID `"checkers"`, version `1`, session type `turn_based`,
+validation `both`. This appendix defines an LRGP reference application; it does
+not change the base LRGP protocol version.
+
+### Board, Rules, and Player Assignment
+
+- The board is 8x8 with files `a`–`h` and ranks `1`–`8`. `a1` is a dark
+  square; only dark squares (file index + rank index even) are playable.
+- Black men start on the dark squares of ranks 6–8 and move toward rank 1.
+  White men start on the dark squares of ranks 1–3 and move toward rank 8.
+  Black moves first.
+- A man moves one square diagonally forward. A king moves one square
+  diagonally in any direction; kings do not fly.
+- A capture jumps an adjacent opposing piece onto the empty square directly
+  beyond it. Men capture forward only; kings capture in any direction.
+- Captures are mandatory. When several captures exist the mover may choose
+  any of them, but a chosen jump sequence MUST be completed while further
+  jumps are available.
+- Jumped pieces are removed only after the move completes. During the
+  sequence they may not be jumped again and they block landing. The moving
+  piece's origin square is empty during the sequence.
+- A man that reaches the far rank is crowned and its move ends, even if the
+  new king could continue jumping.
+- A player with no legal move on their turn, including having no pieces,
+  loses.
+- White's and Black's identities are chosen by a coin flip when the responder
+  accepts; the responder sends the Black-player hash back in the `b` key of
+  the ACCEPT payload.
+
+### Wire Format Principles
+
+- **Square paths only.** Every move is a path of square names joined by single
+  ASCII spaces: the origin followed by each landing square. Examples: `a3 b4`
+  (simple move), `a5 c3 e1` (double jump), `e7 c5 a3 c1` (triple jump). Squares
+  are lowercase file plus rank digit and MUST be dark. A path has 2–13
+  squares. Any other spelling (uppercase, extra or tab whitespace, `-`/`x`
+  separators) is invalid. Board snapshots are never transmitted.
+- **State by replay.** Each peer reconstructs the current position by replaying
+  the path history from the starting position. A path that does not exactly
+  match a legal move from the replayed position, including a partial jump
+  sequence, is rejected.
+- **Draws are claim-based or negotiated.** No position is drawn automatically.
+  A peer may send `draw_offer` with `r = "3fr"` when the current position (the
+  board plus the side to move) has occurred at least three times, or with
+  `r = "40m"` when 80 consecutive plies have contained no capture and no man
+  move. The receiver verifies the claim against its replayed position. A valid
+  claim ends the game as a draw immediately (no `draw_accept` round trip); an
+  invalid claim degrades to a plain draw offer. The claimant pre-terminates its
+  local session on a valid claim.
+
+### Payload Schema
+
+| Key | Type | Used In | Description |
+|-----|------|---------|-------------|
+| `m` | str | move | Square path (`a3 b4`, `a5 c3 e1`) |
+| `n` | int | move | Ply counter, 0-based (0 = Black's first move) |
+| `x` | str | move | Terminal status: `""` or `"win"` |
+| `r` | str | move, draw_offer | Terminal reason (see codes below) or claim reason on `draw_offer` |
+| `w` | str | move (terminal=win) | Winner identity hash |
+| `b` | str | accept | Black-player (first mover) identity hash |
+
+#### Canonical Command Payloads
+
+Inbound wire payloads MUST contain exactly the keys shown; missing keys,
+additional keys, and values of the wrong MessagePack type are invalid and MUST
+be rejected before session mutation.
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{}` |
+| `accept` | `{b}` where `b` is one of the two bound participant identities |
+| `decline` | `{}` |
+| non-terminal `move` | `{m, n, x}` with `x=""` |
+| winning `move` | `{m, n, x, r, w}` with `x="win"`, `r` of `np` or `nm`, and `w` equal to the authenticated mover |
+| `resign` | `{}` |
+| plain `draw_offer` | `{}` |
+| claim `draw_offer` | `{r}` where `r` is exactly `3fr` or `40m` |
+| `draw_accept` | `{}` |
+| `draw_decline` | `{}` |
+
+The local outgoing API accepts concise intent rather than caller-forged state:
+`move` accepts exactly `{m}`; `draw_offer` accepts `{}` or exactly `{r}`; all
+other Checkers actions above accept `{}`. The game implementation derives the
+final canonical wire payload. A recognized but locally ineligible claim reason
+degrades to a plain outstanding offer while retaining `{r}` on the wire so the
+receiver independently verifies eligibility. A receiver MUST reject a
+non-sequential ply, an illegal or non-canonical path, a move by the wrong
+participant, a false or missing terminal claim, a wrong terminal reason, a
+forged winner, or any move after completion. `error` uses Section 9.
+
+### Terminal Reason Codes
+
+| Code | Meaning |
+|------|---------|
+| `np` | Opponent has no pieces left |
+| `nm` | Opponent has pieces but no legal move |
+| `3fr` | Threefold repetition (claimed) |
+| `40m` | Forty-move rule (claimed) |
+| `rsn` | Resignation |
+| `agr` | Draw by agreement |
+
+### Canonical Local Metadata
+
+The reference application exposes `board`, `moves`, `my_color`, `first_turn`,
+`turn`, `move_count`, `last_move`, `winner`, `terminal`, `terminal_reason`,
+`must_capture`, `legal_moves`, `draw_offered`, `draw_offered_by`, and
+`draw_offer_reason`. `board` is 64 ASCII cells in row-major order from `a8`
+(index 0) to `h1` (index 63): `_` empty, `b`/`w` men, `B`/`W` kings.
+`my_color` is `"b"` or `"w"` and `first_turn` is the Black player. `terminal`
+is `""`, `"win"`, or `"draw"`. Persistence hydration MUST replay `moves` and
+revalidate the board, move count, last move, colors, turn, terminal status,
+terminal reason, winner identity, claim eligibility, and participant bindings
+before accepting a stored session.

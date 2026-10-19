@@ -1,3 +1,4 @@
+pub mod checkers;
 pub mod chess;
 pub mod four_in_a_row;
 pub mod tictactoe;
@@ -15,6 +16,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(tictactoe::TicTacToeApp::new()),
         Box::new(chess::ChessApp::new()),
         Box::new(four_in_a_row::FourInARowApp::new()),
+        Box::new(checkers::CheckersApp::new()),
     ]
 }
 
@@ -29,7 +31,7 @@ mod tests {
     #[test]
     fn builtin_registry_has_unique_coherent_manifests() {
         let games = builtin_games();
-        assert!(games.len() >= 3);
+        assert!(games.len() >= 4);
 
         let mut ids = HashSet::new();
         for game in games {
@@ -58,7 +60,7 @@ mod tests {
                 ));
             }
         }
-        for built_in in ["ttt", "chess", "four_in_a_row"] {
+        for built_in in ["ttt", "chess", "four_in_a_row", "checkers"] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }
     }
