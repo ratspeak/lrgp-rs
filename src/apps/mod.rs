@@ -1,6 +1,12 @@
 pub mod checkers;
 pub mod chess;
+pub mod dots_and_boxes;
 pub mod four_in_a_row;
+pub mod gomoku;
+pub mod hex;
+pub mod mancala;
+mod placement;
+pub mod reversi;
 pub mod tictactoe;
 
 use crate::app_base::GameApp;
@@ -17,6 +23,11 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(chess::ChessApp::new()),
         Box::new(four_in_a_row::FourInARowApp::new()),
         Box::new(checkers::CheckersApp::new()),
+        Box::new(hex::HexApp::new()),
+        Box::new(gomoku::GomokuApp::new()),
+        Box::new(reversi::ReversiApp::new()),
+        Box::new(dots_and_boxes::DotsAndBoxesApp::new()),
+        Box::new(mancala::MancalaApp::new()),
     ]
 }
 
@@ -31,7 +42,7 @@ mod tests {
     #[test]
     fn builtin_registry_has_unique_coherent_manifests() {
         let games = builtin_games();
-        assert!(games.len() >= 4);
+        assert!(games.len() >= 9);
 
         let mut ids = HashSet::new();
         for game in games {
@@ -60,7 +71,17 @@ mod tests {
                 ));
             }
         }
-        for built_in in ["ttt", "chess", "four_in_a_row", "checkers"] {
+        for built_in in [
+            "ttt",
+            "chess",
+            "four_in_a_row",
+            "checkers",
+            "hex",
+            "gomoku",
+            "reversi",
+            "dots_and_boxes",
+            "mancala",
+        ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }
     }

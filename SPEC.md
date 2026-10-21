@@ -785,3 +785,206 @@ is `""`, `"win"`, or `"draw"`. Persistence hydration MUST replay `moves` and
 revalidate the board, move count, last move, colors, turn, terminal status,
 terminal reason, winner identity, claim eligibility, and participant bindings
 before accepting a stored session.
+
+---
+
+## E. Stone-Placement Reference Games
+
+Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`) are built-in
+two-player games in which every move places one stone on a named square. They
+share one wire contract (E.1) and differ only in their rules (E.2–E.4). All
+three use session type `turn_based` and validation `both`. This appendix
+defines LRGP reference applications; it does not change the base LRGP
+protocol version.
+
+### E.1 Shared Wire Contract
+
+#### Squares and Player Assignment
+
+- A square is a lowercase file letter followed by a decimal rank with no
+  leading zero: `a1` is the bottom-left square and ranks grow upward. On an
+  N×N board files run `a` onward for N letters and ranks run `1`–`N`. Any
+  other spelling is invalid.
+- Black moves first. The responder flips a coin when accepting and sends the
+  Black player's identity in the `b` key of the ACCEPT payload.
+- Each peer reconstructs the position by replaying the accepted move history
+  from the starting position. Boards, legal-move lists, and next-turn
+  identities are never transmitted.
+
+#### Payload Schema
+
+| Key | Type | Used In | Description |
+|-----|------|---------|-------------|
+| `m` | str | move | Square (`h8`), or `swap` in Hex |
+| `n` | int | move | Ply counter, 0-based: the number of moves already played |
+| `x` | str | move | Terminal status: `""`, `"win"`, or `"draw"` |
+| `w` | str | move (terminal=win) | Winner identity hash |
+| `b` | str | accept | Black-player (first mover) identity hash |
+
+#### Canonical Command Payloads
+
+Inbound wire payloads MUST contain exactly the keys shown; missing keys,
+additional keys, and values of the wrong MessagePack type are invalid and MUST
+be rejected before session mutation.
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{}` |
+| `accept` | `{b}` where `b` is one of the two bound participant identities |
+| `decline` | `{}` |
+| non-terminal `move` | `{m, n, x}` with `x=""` |
+| winning `move` | `{m, n, x, w}` with `x="win"` and `w` equal to the identity the replayed position names as winner |
+| drawn `move` | `{m, n, x}` with `x="draw"` (Gomoku and Reversi only) |
+| `resign` | `{}` |
+| `draw_offer` | `{}` |
+| `draw_accept` | `{}` |
+| `draw_decline` | `{}` |
+
+The local outgoing API accepts exactly `{m}` for `move` and `{}` for every
+other action above. The implementation derives `n`, the terminal claim, the
+winner, and the next turn. A receiver MUST independently replay the history
+and reject a non-sequential ply, a non-canonical or illegal square, a move by
+the participant who is not to move, a false or missing terminal claim, a
+forged winner, or any move after completion. A winning move's `w` is the
+identity that the rules declare the winner, which in Reversi need not be the
+mover. Draws may also be negotiated with `draw_offer` and `draw_accept`; no
+draw claims exist. `error` uses Section 9.
+
+#### Canonical Local Metadata
+
+The reference applications expose `board`, `moves`, `my_color`, `first_turn`,
+`turn`, `move_count`, `last_move`, `legal_moves`, `winner`, `terminal`,
+`terminal_reason`, `draw_offered`, and `draw_offered_by`. `board` holds N×N
+ASCII cells row-major from the top-left square (`a` on rank N) to the
+bottom-right square (the last file on rank 1): `_` empty, `b` Black, `w`
+White. `my_color` is `"b"` or `"w"` and `first_turn` is the Black player.
+`legal_moves` lists the moves available to the player to move in canonical
+order (squares by ascending rank, then file; `swap` last) and is empty after
+the game ends. `terminal_reason` is `rsn` for resignation, `agr` for a
+negotiated draw, or the game's board reason below. Persistence hydration MUST
+replay `moves` and revalidate the board, move count, last move, colors, turn,
+terminal status, terminal reason, winner identity, and participant bindings
+before accepting a stored session. When a session expires, any outstanding
+draw offer is cleared.
+
+### E.2 Hex (`hex.1`)
+
+- The board is 11×11 (`a1`–`k11`). Cell `(file, rank)` touches the six cells
+  at file±1 on the same rank, rank±1 on the same file, `(file+1, rank-1)`,
+  and `(file-1, rank+1)`.
+- Black wins by connecting rank 1 to rank 11 with a chain of Black stones;
+  White wins by connecting file `a` to file `k`. A move onto an occupied cell
+  is illegal. Hex cannot end in a draw, so `x="draw"` is never valid.
+- **Swap rule.** As the second move of the game only (`n=1`), White may send
+  `m="swap"`. Black's single stone is removed and a White stone is placed on
+  the mirrored cell, the one with file and rank exchanged (`c7` becomes
+  `g3`). Each player keeps its color and Black moves next, so turns still
+  alternate.
+- Board reason: `con` (connected).
+
+### E.3 Gomoku (`gomoku.1`)
+
+- The board is 15×15 (`a1`–`o15`). Freestyle rules: a stone that completes
+  five or more consecutive stones of one color horizontally, vertically, or
+  diagonally wins. A move onto an occupied square is illegal.
+- Filling the last empty square without completing five draws the game.
+- Board reasons: `5ir` (five in a row) and `ful` (full board).
+
+### E.4 Reversi (`reversi.1`)
+
+- The board is 8×8 (`a1`–`h8`). The game starts with White on `d4` and `e5`
+  and Black on `d5` and `e4`.
+- A move MUST bracket at least one straight line, in any of the eight
+  directions, of one or more opposing discs between the new disc and another
+  disc of the mover's color. Every bracketed disc is flipped.
+- **Automatic passing.** After a move, if the opponent has a legal move it is
+  the opponent's turn. Otherwise, if the mover still has a legal move, the
+  mover moves again and no pass message is sent. Otherwise the game is over.
+- When the game is over the side with more discs wins and equal counts draw.
+  The winner need not be the player who made the last move, so a winning
+  move's `w` is the identity with more discs.
+- Additional local metadata: `black_count`, `white_count`, and
+  `skipped_turn`, which is true when the last move left the opponent without
+  a move.
+- Board reason: `cnt` (disc count) for both wins and draws.
+
+## F. Dots and Boxes and Mancala Reference Games
+
+Dots and Boxes (`dots_and_boxes.1`) and Mancala (`mancala.1`) are built-in
+two-player games in which every move is a single token and a move can earn
+the mover another turn. They use the Appendix E.1 wire contract unchanged
+(payload schema, canonical command payloads, the `b` coin flip, replay, and
+hydration) except for the differences below. Both use session type
+`turn_based` and validation `both`. This appendix defines LRGP reference
+applications; it does not change the base LRGP protocol version.
+
+### F.1 Differences from E.1
+
+- **Move tokens.** `m` is a line (F.2) or a pit (F.3), not a square. Any
+  other spelling is invalid.
+- **Roles.** `b` (Black) is the first mover and `w` (White) the second;
+  `my_color` and `first_turn` keep their E.1 meaning.
+- **Extra turns.** After each move the rules decide who moves next. A move
+  that earns another turn is an ordinary `{m, n, x}` move; no pass or
+  continue message exists, and `n` still counts every move played. A
+  receiver MUST reject a move from the participant the replayed position
+  does not name as next to move.
+- **Board.** `board` uses the encoding given for each game below.
+- **Winner.** A winning move's `w` is the identity with more boxes or
+  seeds, which need not be the mover.
+
+### F.2 Dots and Boxes (`dots_and_boxes.1`)
+
+- The grid is 5×5 boxes on 6×6 dots. Dots are named like squares on a 6×6
+  board (`a1`–`f6`).
+- A line is a dot followed by `h` for the line to the dot on its right or
+  `v` for the line to the dot above it: `c3h` joins c3 and d3, `c3v` joins
+  c3 and c4. Dots on file `f` have no `h` line and dots on rank 6 have no
+  `v` line, so there are 60 lines. Drawing a line that is already drawn is
+  illegal.
+- A move that completes one or two boxes claims them for the mover, who
+  then moves again. Otherwise the turn passes.
+- The game ends when every box is claimed; the side with more boxes wins.
+  With 25 boxes a draw is impossible, so `x="draw"` is never valid.
+- `legal_moves` lists undrawn lines by dot (ascending rank, then file), `h`
+  before `v` at the same dot.
+- `board` is an 11×11 picture row-major from the top-left dot (`a6`): `+`
+  for a dot, `-` or `|` for a drawn line, a space for an undrawn line, and
+  `_`, `b`, or `w` for an unclaimed or claimed box.
+- Additional local metadata: `black_boxes`, `white_boxes`, and
+  `extra_turn`, which is true when the last move claimed a box.
+- Board reason: `cnt` (box count).
+
+### F.3 Mancala (`mancala.1`)
+
+- Kalah rules with six pits per side and four seeds in each pit. Black's
+  pits are `a`–`f` from Black's left to right, followed by Black's store;
+  White's pits are `g`–`l` from White's left to right, followed by White's
+  store. Pit `a` faces `l`, `b` faces `k`, and so on to `f` facing `g`.
+- A move names one of the mover's own non-empty pits. Its seeds are lifted
+  and sown one per hole in the order `a`…`f`, Black's store, `g`…`l`,
+  White's store, and around again, skipping the opponent's store.
+- If the last seed lands in the mover's store, the mover moves again. If it
+  lands in an empty pit of the mover's own and the facing pit holds seeds,
+  that seed and the facing pit's seeds go to the mover's store.
+- After any move, if either player's six pits are all empty the game ends:
+  each player adds the seeds left in their own pits to their own store.
+  More seeds in the store wins and 24–24 draws. A game that ends this way
+  ends even if the last move landed in the mover's store.
+- `legal_moves` lists the mover's non-empty pits alphabetically.
+- `board` is the fourteen hole counts in sowing order, comma-separated:
+  `a`–`f`, Black's store, `g`–`l`, White's store. The opening board is
+  `4,4,4,4,4,4,0,4,4,4,4,4,4,0`.
+- Additional local metadata: `black_store`, `white_store`, and
+  `extra_turn`, which is true when the last seed landed in the mover's
+  store.
+- Board reason: `cnt` (store count) for both wins and draws.
+
+### F.4 Reference Games
+
+The shared fixtures include one reference game per game, played by the
+self-play policy `legal[(ply * 7 + seed) % len(legal)]` with the challenger
+as Black: Dots and Boxes with seed 1 and Mancala with seed 4, both won by
+White after Black's last move. A Mancala draw is the same policy with seed
+3. Conforming implementations MUST reproduce every legal-move list and the
+final move payload of each game.

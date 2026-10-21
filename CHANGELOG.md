@@ -4,6 +4,26 @@
 
 ### Added
 
+- **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
+  built-in stone-placement games sharing one wire contract: moves are a
+  single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each
+  peer replays the history. Hex is 11x11 with the swap rule, Gomoku is 15x15
+  freestyle (five or more wins), and Reversi passes automatically when a
+  player has no legal move, so its winner can be the non-mover. Hydration
+  replays the stored history. SPEC.md Appendix E is normative.
+- **Dots and Boxes (`dots_and_boxes.1`) and Mancala (`mancala.1`)** — two
+  more built-ins on the same engine and wire contract. Dots and Boxes is a
+  5x5-box grid with moves naming a line (`c3h`, `c3v`); completing a box
+  claims it and earns another move. Mancala uses Kalah rules with six pits of
+  four seeds, moves naming a pit (`a`–`l`), extra turns for ending in your
+  store, and captures from an empty pit of your own. Extra turns need no
+  message: each peer derives who moves next. SPEC.md Appendix F is normative.
+- Cross-language fixtures for the single-token games, including one reference
+  game per game (a Hex swap, a Reversi automatic pass, a Dots and Boxes
+  double box, and Mancala extra turns and captures; Reversi, Dots and Boxes,
+  and Mancala are each won by the player who did not move last) plus a
+  full-board Gomoku draw and a 24–24 Mancala draw, all shared with `lrgp-py`.
+
 - **Checkers (`checkers.1`)** — built-in American checkers / English
   draughts with mandatory captures, completed multi-jumps, crowning that ends
   the move, and two-side validation by replay. Move envelopes carry a
