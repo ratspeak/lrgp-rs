@@ -1,3 +1,4 @@
+pub mod battleship;
 pub mod checkers;
 pub mod chess;
 pub mod dots_and_boxes;
@@ -32,6 +33,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(mancala::MancalaApp::new()),
         Box::new(ultimate_ttt::UltimateTicTacToeApp::new()),
         Box::new(go::GoApp::new()),
+        Box::new(battleship::BattleshipApp::new()),
     ]
 }
 
@@ -87,6 +89,7 @@ mod tests {
             "mancala",
             "ultimate_ttt",
             "go",
+            "battleship",
         ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }

@@ -27,6 +27,7 @@ tracing = "0.1"
 rand = "0.8"
 hex = "0.4"
 cozy-chess = "0.3.4"
+sha2 = "0.10"
 
 [dev-dependencies]
 tracing-subscriber = "0.3"

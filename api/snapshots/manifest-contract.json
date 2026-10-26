@@ -117,6 +117,17 @@
           "sourceKind": "registry"
         },
         {
+          "name": "sha2",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^0.10",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
           "name": "thiserror",
           "rename": null,
           "kind": null,

@@ -1048,3 +1048,122 @@ applications; it does not change the base LRGP protocol version.
 - Board reason: `cnt` (area count).
 - Reference game (Appendix F.4 policy): seed 12. Black passes last and
   holds more area (42 to 39), but White wins on komi.
+
+## H. Battleship Reference Game
+
+Battleship (`battleship.1`) is a built-in two-player game with hidden
+information. Its session type is `turn_based` and validation model is
+`both`. Each player commits to a fleet before play and reveals it at the
+end, so every answer a player gave can be checked. This appendix defines an
+LRGP reference application; it does not change the base LRGP protocol
+version.
+
+### Board, Fleet, and Commitment
+
+- The board is 10×10 with squares named as in Appendix E.1 (`a1`–`j10`).
+- A fleet is five ships of lengths 5, 4, 3, 3, and 2, in that order. Its
+  canonical text is five tokens joined by single spaces, one per ship in
+  fleet order. A token is the ship's first square followed by `h` (the ship
+  runs toward higher files) or `v` (toward higher ranks): `a1h` is a ship on
+  a1, b1, c1, … Every ship MUST lie on the board and no two ships may share
+  a square. Ships may touch.
+- A salt is 32 lowercase hexadecimal characters (16 random bytes).
+- A commitment is the lowercase hexadecimal SHA-256 of the ASCII text
+  `<fleet>:<salt>`. For fleet `a1h a2h a3h a4h a5h` and salt
+  `00112233445566778899aabbccddeeff` it is
+  `c64fbc70ca15a8f7ab30eb4855d65df26150d34d7016b6a1e44f57396e0a8aeb`.
+- The responder flips a coin when accepting and sends the first shooter's
+  identity in `b`. The first shooter is `b` (Black) in `my_color`.
+
+### Play
+
+Players alternate plies. A ply is one of:
+
+1. **Shot** — fire at a square the mover has not fired at before, and
+   answer the opponent's previous shot: `m` (miss), `h` (hit), or `s` (the
+   hit was the last unhit square of a ship, which sinks). The very first ply
+   has no shot to answer and carries the answer `""`.
+2. **Concession** — when the opponent's previous shot sinks the mover's last
+   ship, the mover answers `s` and reveals its fleet and salt instead of
+   shooting.
+3. **Reveal** — the only ply allowed after a concession: the winner reveals
+   its own fleet and salt, and the game ends with the winner (`x="win"`).
+
+A player whose fleet has been sunk MUST concede rather than shoot. There are
+no board draws; draws may be negotiated with `draw_offer` and
+`draw_accept`, and either player may resign.
+
+### Canonical Command Payloads
+
+Inbound wire payloads MUST contain exactly the keys shown. Missing,
+additional, or incorrectly typed values MUST be rejected before mutation.
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{h}`, the challenger's commitment |
+| `accept` | `{b, h}`, the first shooter and the responder's commitment |
+| `decline` | `{}` |
+| shot `move` | `{s, a, n, x}` with `s` a square, `a` the answer, and `x=""` |
+| concession `move` | `{a, f, k, n, x}` with `a="s"`, the fleet `f`, the salt `k`, and `x=""` |
+| reveal `move` | `{f, k, n, x, w}` with `x="win"` and `w` the mover |
+| `resign` | `{}` |
+| `draw_offer` | `{}` |
+| `draw_accept` | `{}` |
+| `draw_decline` | `{}` |
+
+`n` is the 0-based ply counter. The local outgoing API accepts `{}`, `{f}`,
+or `{f, k}` for `challenge` and `accept` (a missing fleet or salt is chosen
+at random), `{s}` for a shot, and `{}` for a concession or reveal. The
+implementation derives every answer, `n`, and the terminal claim.
+
+### Checking
+
+- A receiver MUST reject a ply from the participant not to move, a
+  non-sequential `n`, a repeated or invalid square, a missing or malformed
+  answer, a shot from a player who has reported all five ships sunk, and
+  more than 17 reported hits.
+- A revealed fleet MUST be canonical and match the sender's commitment.
+  Once a fleet is revealed, the receiver MUST replay every answer its owner
+  gave against it and reject the ply if any answer is false, or if a
+  concession does not in fact sink the last ship.
+- A receiver MUST reject a reveal unless the receiver conceded in the
+  previous ply.
+
+### Canonical Local Metadata
+
+The reference applications expose `my_color`, `first_turn`, `turn`,
+`phase`, `shots`, `answers`, `move_count`, `last_move`, `legal_moves`,
+`my_fleet`, `my_salt`, `my_commit`, `their_commit`, `their_fleet`,
+`their_salt`, `my_board`, `their_board`, `my_sunk`, `their_sunk`, `winner`,
+`terminal`, `terminal_reason`, `draw_offered`, and `draw_offered_by`.
+
+- `shots` and `answers` hold one entry per ply: the square fired at (`""`
+  for a concession or reveal) and the answer carried (`""` for the first ply
+  and the reveal).
+- `phase` is what the player to move must do: `shoot`, `concede`, or
+  `reveal` (empty once the game is over). Only a player's own side knows
+  when it must concede, so the opponent's phase reads `shoot` until then.
+- `legal_moves` lists the squares the player to move has not fired at
+  (ascending rank, then file) in the `shoot` phase, and is empty otherwise.
+- `my_board` is 100 cells row-major from `a10`: `s` ship, `x` hit ship,
+  `o` miss, `_` water. `their_board` uses `x` and `o` for answered shots,
+  `?` for the last shot before its answer arrives, and `_` elsewhere; once
+  the opponent's fleet is revealed it uses `my_board`'s encoding.
+- `my_sunk` and `their_sunk` count sunk ships.
+- `terminal_reason` is `snk` (fleet sunk), `rsn`, or `agr`.
+
+Persistence hydration MUST check the stored fleet against its commitment,
+replay the plies, and revalidate the turn, derived boards, terminal status,
+winner, and participant bindings before accepting a stored session.
+
+### Reference Game
+
+The shared fixtures include a reference game with fixed fleets and salts:
+the challenger's fleet is `b2v d9h g3v i6v e1h` with salt
+`00112233445566778899aabbccddeeff`, and the responder's is
+`a10h c2v f5h h7v j1v` with salt `ffeeddccbbaa99887766554433221100`. The
+challenger shoots first, and every shot follows the Appendix F.4 policy
+over the shooter's `legal_moves` with seed 3. After 148 plies the
+challenger's fleet is sunk; the challenger concedes and the responder
+reveals and wins. Conforming implementations MUST derive the same shots,
+answers, concession, and reveal.

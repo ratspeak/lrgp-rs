@@ -176,14 +176,14 @@ fn flip_responder_coin<R: PlacementRules>() -> bool {
     (rand::thread_rng().next_u32() & 1) == 0
 }
 
-fn gen_session_id() -> String {
+pub(crate) fn gen_session_id() -> String {
     use rand::RngCore;
     let mut buf = [0u8; 8];
     rand::thread_rng().fill_bytes(&mut buf);
     hex::encode(buf)
 }
 
-fn error_result(code: &str, msg: &str) -> IncomingResult {
+pub(crate) fn error_result(code: &str, msg: &str) -> IncomingResult {
     let mut err = HashMap::new();
     err.insert("code".into(), JsonValue::String(code.into()));
     err.insert("msg".into(), JsonValue::String(msg.into()));
@@ -194,14 +194,14 @@ fn error_result(code: &str, msg: &str) -> IncomingResult {
     }
 }
 
-fn meta_str(meta: &HashMap<String, JsonValue>, key: &str) -> String {
+pub(crate) fn meta_str(meta: &HashMap<String, JsonValue>, key: &str) -> String {
     meta.get(key)
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .to_string()
 }
 
-fn meta_string_list(meta: &HashMap<String, JsonValue>, key: &str) -> Vec<String> {
+pub(crate) fn meta_string_list(meta: &HashMap<String, JsonValue>, key: &str) -> Vec<String> {
     meta.get(key)
         .and_then(|v| v.as_array())
         .map(|arr| {
@@ -212,11 +212,11 @@ fn meta_string_list(meta: &HashMap<String, JsonValue>, key: &str) -> Vec<String>
         .unwrap_or_default()
 }
 
-fn string_list_value(v: &[String]) -> JsonValue {
+pub(crate) fn string_list_value(v: &[String]) -> JsonValue {
     JsonValue::Array(v.iter().map(|s| JsonValue::String(s.clone())).collect())
 }
 
-fn other_player(session: &Session, player: &str) -> Option<String> {
+pub(crate) fn other_player(session: &Session, player: &str) -> Option<String> {
     if player == session.identity_id {
         (!session.contact_hash.is_empty()).then(|| session.contact_hash.clone())
     } else if player == session.contact_hash {
@@ -1623,7 +1623,7 @@ macro_rules! placement_coin {
 }
 pub(crate) use placement_coin;
 
-fn session_to_json(session: &Session) -> HashMap<String, JsonValue> {
+pub(crate) fn session_to_json(session: &Session) -> HashMap<String, JsonValue> {
     let mut m = HashMap::new();
     m.insert(
         "session_id".into(),
@@ -1661,7 +1661,7 @@ fn session_to_json(session: &Session) -> HashMap<String, JsonValue> {
     m
 }
 
-fn rmpv_to_json(v: &rmpv::Value) -> JsonValue {
+pub(crate) fn rmpv_to_json(v: &rmpv::Value) -> JsonValue {
     match v {
         rmpv::Value::Nil => JsonValue::Null,
         rmpv::Value::Boolean(b) => JsonValue::Bool(*b),
