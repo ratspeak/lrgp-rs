@@ -1021,3 +1021,30 @@ applications; it does not change the base LRGP protocol version.
   finished).
 - Reference games (Appendix F.4 policy): seed 4, won by White, and seed
   19, drawn after Black finishes the last small board.
+
+### G.2 Go (`go.1`)
+
+- The board is 9×9 (`a1`–`i9`; file `i` is used, unlike some Go
+  coordinates). A move is an empty point or `pass`.
+- A stone placed next to opposing chains removes every opposing chain left
+  without a liberty (an empty orthogonal neighbor). A move that leaves its
+  own chain without a liberty after those captures is suicide and illegal.
+- **Positional superko.** A move MUST NOT recreate any board that occurred
+  earlier in the game, including the empty starting board. Passing never
+  breaks this rule.
+- Two passes in a row end the game. There is no dead-stone agreement:
+  every stone on the board counts as alive, so players capture dead stones
+  before passing (under area scoring this costs nothing).
+- **Area scoring.** Each side scores its stones plus the empty regions that
+  border only its own stones. White adds 7.5 points of komi, so the game
+  cannot be drawn and `x="draw"` is never valid. The final move is always
+  the second pass, and a winning move's `w` is the identity with the higher
+  score, which need not be the mover.
+- `legal_moves` lists the legal points by ascending rank, then file, and
+  `pass` last.
+- Additional local metadata: `black_count` and `white_count` (the area
+  score of the current board, without komi), `komi` (`7.5`), and
+  `black_captures` and `white_captures` (stones each side has captured).
+- Board reason: `cnt` (area count).
+- Reference game (Appendix F.4 policy): seed 12. Black passes last and
+  holds more area (42 to 39), but White wins on komi.
