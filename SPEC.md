@@ -1132,6 +1132,24 @@ applied; hydration MUST check it against the replayed position.
 - Reference game (Appendix F.4 policy): seed 18, won by White reaching
   rank 1.
 
+### G.6 Amazons (`amazons.1`)
+
+- The board is 10×10 (`a1`–`j10`). Black's four amazons start on `a4`,
+  `d1`, `g1`, and `j4`; White's on `a7`, `d10`, `g10`, and `j7`.
+- A move is written `<from><to>/<arrow>` (`d1d7/g7`): one of the mover's
+  amazons slides like a chess queen, any distance in one of eight
+  directions over empty squares, and then shoots an arrow the same way from
+  where it landed. The square the amazon left counts as empty for the
+  arrow. The arrow's square is burnt and blocks amazons and arrows for the
+  rest of the game.
+- The player left without a legal move loses; the game cannot be drawn and
+  `x="draw"` is never valid. The opening position has 2176 legal moves.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- `board` uses `x` for a burnt square.
+- Board reason: `nm` (no legal move).
+- Reference game (Appendix F.4 policy): seed 15, won by White when Black
+  is left without a move.
+
 ## H. Battleship Reference Game
 
 Battleship (`battleship.1`) is a built-in two-player game with hidden

@@ -25,8 +25,8 @@
       "tier": "provisional",
       "compatibility": "reviewed-snapshot",
       "snapshot": "api/snapshots/lrgp.txt",
-      "itemCount": 1071,
-      "sha256": "824ed78a6d9bbde08ce2f8d9794cfa0869ff1382b4942198fa8fb9201b4ee5fb"
+      "itemCount": 1119,
+      "sha256": "1137bbd2782ee8dd951dc08671537a03584ddc68a9cdf8998fabc8a7d83026b2"
     }
   ]
 }

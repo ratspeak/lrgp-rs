@@ -30,6 +30,9 @@
 - **Breakthrough (`breakthrough.1`)** — two rows of pieces each on an 8x8
   board, stepping forward and capturing diagonally; the first piece to the
   far rank wins. Moves read `a2b3`. SPEC.md Appendix G.5 is normative.
+- **Amazons (`amazons.1`)** — move a queen-like amazon on a 10x10 board,
+  then shoot an arrow that burns a square for good; whoever runs out of
+  moves loses. Moves read `d1d7/g7`. SPEC.md Appendix G.6 is normative.
 - **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
   built-in stone-placement games sharing one wire contract: moves are a
   single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each

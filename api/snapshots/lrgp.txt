@@ -52,6 +52,25 @@ pub fn lrgp::app_base::GameApp::upsert_session(&self, lrgp::session::Session) ->
 pub fn lrgp::app_base::GameApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::app_base::GameApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::app_base::GameApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::app_id(&self) -> &str
+pub fn lrgp::apps::amazons::AmazonsApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::amazons::AmazonsApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::amazons::AmazonsApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::amazons::AmazonsApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::amazons::AmazonsApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::amazons::AmazonsApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::amazons::AmazonsApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::battleship::BattleshipApp
 pub fn lrgp::apps::battleship::BattleshipApp::app_id(&self) -> &str
 pub fn lrgp::apps::battleship::BattleshipApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -338,6 +357,35 @@ pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_action(&self, &s
 pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::version(&self) -> u32
 pub mod lrgp::apps
+pub mod lrgp::apps::amazons
+pub struct lrgp::apps::amazons::AmazonsApp(_)
+impl lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::new() -> Self
+impl core::default::Default for lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::app_id(&self) -> &str
+pub fn lrgp::apps::amazons::AmazonsApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::amazons::AmazonsApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::amazons::AmazonsApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::amazons::AmazonsApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::amazons::AmazonsApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::amazons::AmazonsApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::amazons::AmazonsApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::version(&self) -> u32
+pub const lrgp::apps::amazons::APP_ID: &str
+pub const lrgp::apps::amazons::APP_VERSION: u32
+pub const lrgp::apps::amazons::SIZE: usize
+pub fn lrgp::apps::amazons::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::battleship
 pub struct lrgp::apps::battleship::BattleshipApp
 impl lrgp::apps::battleship::BattleshipApp
