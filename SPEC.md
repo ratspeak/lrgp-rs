@@ -1289,3 +1289,89 @@ over the shooter's `legal_moves` with seed 3. After 148 plies the
 challenger's fleet is sunk; the challenger concedes and the responder
 reveals and wins. Conforming implementations MUST derive the same shots,
 answers, concession, and reveal.
+
+## I. Rock Paper Scissors Reference Game
+
+Rock Paper Scissors (`rps.1`) is a built-in two-player match won by the
+first player to win three rounds; tied rounds do not count. Its session
+type is `round_based` and validation model is `both`. Because the players
+cannot choose at the same moment over LXMF, one player commits to each
+choice before the other picks. This appendix defines an LRGP reference
+application; it does not change the base LRGP protocol version.
+
+### Roles and Commitment
+
+- The responder flips a coin when accepting and sends the leader's
+  identity in `b` (the ACCEPT payload is `{b}`, as in Appendix E.1). The
+  leader is `b` (Black) in `my_color`; the other player is the follower.
+- A choice is `r` (rock), `p` (paper), or `s` (scissors). Rock beats
+  scissors, scissors beat paper, and paper beats rock.
+- A salt is 32 lowercase hexadecimal characters. A commitment is the
+  lowercase hexadecimal SHA-256 of the ASCII text `<choice>:<salt>`. For
+  choice `r` and salt `00112233445566778899aabbccddeeff` it is
+  `43cde9c5adb91a12b3311cc17a33f446dc379049bae82ad0ff5b391c13cd7a4a`.
+
+### Plies
+
+Players alternate, the leader first:
+
+1. **Commit** (the first ply): the leader sends a commitment to its
+   first-round choice.
+2. **Choose**: the follower sends its choice in the open.
+3. **Reveal**: the leader reveals the committed choice and salt, which
+   decides the round, and in the same ply commits to its next choice. If
+   the round gives either player a third win, the reveal ends the match
+   instead and carries no new commitment; the winner need not be the
+   leader.
+
+Choose and reveal then repeat until the match ends. Draws may be
+negotiated with `draw_offer` and `draw_accept`, and either player may
+resign.
+
+### Canonical Command Payloads
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{}` |
+| `accept` | `{b}` |
+| `decline` | `{}` |
+| commit `move` | `{h, n, x}` with `x=""` |
+| choose `move` | `{c, n, x}` with `x=""` |
+| reveal `move` | `{c, k, h, n, x}` with `x=""` |
+| final reveal `move` | `{c, k, n, x, w}` with `x="win"` and `w` the match winner |
+| `resign`, `draw_offer`, `draw_accept`, `draw_decline` | `{}` |
+
+`n` is the 0-based ply counter. A receiver MUST reject a ply out of turn or
+sequence, a malformed choice, salt, or commitment, a reveal that does not
+match the outstanding commitment, a reveal that commits again after the
+match is decided or fails to commit while it goes on, and a false winner.
+
+The local outgoing API accepts `{c}` (optionally with `k` for a choice
+that will be committed) when a choice is due, and `{}` for a final reveal.
+The implementation keeps the leader's committed choice and salt in local
+metadata until it reveals them.
+
+### Canonical Local Metadata
+
+The reference applications expose `my_color`, `first_turn`, `turn`,
+`phase` (`commit`, `choose`, or `reveal` for the player to move, empty when
+the match is over), `plies` (one object per ply holding its `c`, `k`, and
+`h` values), `rounds` (`[leader, follower]` choice pairs), `black_score` and
+`white_score` (round wins of the leader and the follower), `move_count`,
+`legal_moves` (`p`, `r`, `s` when the player to move picks a choice, empty
+for a final reveal or a finished match), `my_choice` and `my_salt` (the
+leader's committed secret), `winner`, `terminal`, `terminal_reason` (`rnd`,
+`rsn`, or `agr`), `draw_offered`, and `draw_offered_by`. Hydration MUST
+replay the plies, check the leader's stored secret against the outstanding
+commitment, and revalidate the turn, terminal status, and winner.
+
+### Reference Game
+
+The shared fixtures include a reference match. The challenger leads, and
+the rounds follow a fixed script of (leader, follower) choices: `r`/`p`,
+`s`/`p`, `p`/`p`, `r`/`s`, `s`/`r`, and `p`/`s`. The leader's salt for its
+commitment to round `i` (counting from 0) is the byte `i` repeated 16 times
+in hexadecimal, so round 0 uses `00000000000000000000000000000000`. After
+13 plies the follower has won 3 rounds to 2, and the leader's final reveal
+names the responder as the winner. Conforming implementations MUST produce
+the same commitments and payloads.

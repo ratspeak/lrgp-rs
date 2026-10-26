@@ -14,6 +14,7 @@ pub mod pente;
 mod placement;
 pub mod quoridor;
 pub mod reversi;
+pub mod rps;
 pub mod tictactoe;
 pub mod ultimate_ttt;
 
@@ -44,6 +45,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(breakthrough::BreakthroughApp::new()),
         Box::new(amazons::AmazonsApp::new()),
         Box::new(pente::PenteApp::new()),
+        Box::new(rps::RpsApp::new()),
     ]
 }
 
@@ -105,6 +107,7 @@ mod tests {
             "breakthrough",
             "amazons",
             "pente",
+            "rps",
         ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }

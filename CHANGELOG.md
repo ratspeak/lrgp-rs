@@ -36,6 +36,11 @@
 - **Pente (`pente.1`)** — Gomoku on a 19x19 board with captures:
   flanking two opposing stones removes them, and five in a row or five
   captured pairs wins. SPEC.md Appendix G.7 is normative.
+- **Rock Paper Scissors (`rps.1`)** — first to three rounds, the first
+  `round_based` game. The leader commits to each choice with a SHA-256
+  hash before the follower picks, then reveals it with the next round's
+  commitment, so neither side can wait and see. SPEC.md Appendix I is
+  normative.
 - **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
   built-in stone-placement games sharing one wire contract: moves are a
   single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each
