@@ -27,6 +27,9 @@
   opponent piece. Moves read `d2`, `d2-d3`, or `d2-d3xg7` with a removal.
   Repetition and 100 quiet plies draw. SPEC.md Appendix G.4 is normative.
   Single-token games can now record more than one win or draw reason.
+- **Breakthrough (`breakthrough.1`)** — two rows of pieces each on an 8x8
+  board, stepping forward and capturing diagonally; the first piece to the
+  far rank wins. Moves read `a2b3`. SPEC.md Appendix G.5 is normative.
 - **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
   built-in stone-placement games sharing one wire contract: moves are a
   single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each

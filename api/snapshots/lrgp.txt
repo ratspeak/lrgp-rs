@@ -71,6 +71,25 @@ pub fn lrgp::apps::battleship::BattleshipApp::upsert_session(&self, lrgp::sessio
 pub fn lrgp::apps::battleship::BattleshipApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::battleship::BattleshipApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::battleship::BattleshipApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::app_id(&self) -> &str
+pub fn lrgp::apps::breakthrough::BreakthroughApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::breakthrough::BreakthroughApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::breakthrough::BreakthroughApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::checkers::CheckersApp
 pub fn lrgp::apps::checkers::CheckersApp::app_id(&self) -> &str
 pub fn lrgp::apps::checkers::CheckersApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -355,6 +374,35 @@ pub fn lrgp::apps::battleship::commitment(&str, &str) -> alloc::string::String
 pub fn lrgp::apps::battleship::force_coin(core::option::Option<bool>)
 pub fn lrgp::apps::battleship::parse_fleet(&str) -> core::option::Option<alloc::vec::Vec<alloc::vec::Vec<usize>>>
 pub fn lrgp::apps::battleship::random_fleet() -> alloc::string::String
+pub mod lrgp::apps::breakthrough
+pub struct lrgp::apps::breakthrough::BreakthroughApp(_)
+impl lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::new() -> Self
+impl core::default::Default for lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::app_id(&self) -> &str
+pub fn lrgp::apps::breakthrough::BreakthroughApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::breakthrough::BreakthroughApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::breakthrough::BreakthroughApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::version(&self) -> u32
+pub const lrgp::apps::breakthrough::APP_ID: &str
+pub const lrgp::apps::breakthrough::APP_VERSION: u32
+pub const lrgp::apps::breakthrough::SIZE: usize
+pub fn lrgp::apps::breakthrough::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::checkers
 pub struct lrgp::apps::checkers::CheckersApp
 impl lrgp::apps::checkers::CheckersApp

@@ -1,4 +1,5 @@
 pub mod battleship;
+pub mod breakthrough;
 pub mod checkers;
 pub mod chess;
 pub mod dots_and_boxes;
@@ -38,6 +39,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(battleship::BattleshipApp::new()),
         Box::new(quoridor::QuoridorApp::new()),
         Box::new(morris::MorrisApp::new()),
+        Box::new(breakthrough::BreakthroughApp::new()),
     ]
 }
 
@@ -96,6 +98,7 @@ mod tests {
             "battleship",
             "quoridor",
             "morris",
+            "breakthrough",
         ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }

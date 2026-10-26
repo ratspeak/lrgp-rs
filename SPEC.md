@@ -1114,6 +1114,24 @@ applications; it does not change the base LRGP protocol version.
 Single-token games with more than one board reason record the reason that
 applied; hydration MUST check it against the replayed position.
 
+### G.5 Breakthrough (`breakthrough.1`)
+
+- The board is 8×8 (`a1`–`h8`). Black starts with sixteen pieces on ranks
+  1 and 2 and moves up the board; White starts on ranks 7 and 8 and moves
+  down.
+- A move is a piece's square followed by its destination with nothing in
+  between (`a2b3`). A piece steps one square forward, straight or
+  diagonally. A straight step needs an empty square; a diagonal step goes
+  to an empty square or captures an opposing piece there.
+- A piece that reaches the far rank wins, and capturing every opposing
+  piece wins. A side with pieces always has a move, so the game cannot be
+  drawn and `x="draw"` is never valid.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- Additional local metadata: `black_count` and `white_count`.
+- Board reasons: `gol` (reached the far rank) and `np` (no pieces left).
+- Reference game (Appendix F.4 policy): seed 18, won by White reaching
+  rank 1.
+
 ## H. Battleship Reference Game
 
 Battleship (`battleship.1`) is a built-in two-player game with hidden
