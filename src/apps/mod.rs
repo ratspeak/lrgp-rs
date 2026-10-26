@@ -10,6 +10,7 @@ pub mod gomoku;
 pub mod hex;
 pub mod mancala;
 pub mod morris;
+pub mod pente;
 mod placement;
 pub mod quoridor;
 pub mod reversi;
@@ -42,6 +43,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(morris::MorrisApp::new()),
         Box::new(breakthrough::BreakthroughApp::new()),
         Box::new(amazons::AmazonsApp::new()),
+        Box::new(pente::PenteApp::new()),
     ]
 }
 
@@ -102,6 +104,7 @@ mod tests {
             "morris",
             "breakthrough",
             "amazons",
+            "pente",
         ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }

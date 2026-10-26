@@ -33,6 +33,9 @@
 - **Amazons (`amazons.1`)** — move a queen-like amazon on a 10x10 board,
   then shoot an arrow that burns a square for good; whoever runs out of
   moves loses. Moves read `d1d7/g7`. SPEC.md Appendix G.6 is normative.
+- **Pente (`pente.1`)** — Gomoku on a 19x19 board with captures:
+  flanking two opposing stones removes them, and five in a row or five
+  captured pairs wins. SPEC.md Appendix G.7 is normative.
 - **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
   built-in stone-placement games sharing one wire contract: moves are a
   single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each

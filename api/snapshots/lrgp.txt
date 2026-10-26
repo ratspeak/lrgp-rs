@@ -280,6 +280,25 @@ pub fn lrgp::apps::morris::MorrisApp::upsert_session(&self, lrgp::session::Sessi
 pub fn lrgp::apps::morris::MorrisApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::morris::MorrisApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::morris::MorrisApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::app_id(&self) -> &str
+pub fn lrgp::apps::pente::PenteApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::pente::PenteApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::pente::PenteApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::pente::PenteApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::pente::PenteApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::pente::PenteApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::pente::PenteApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::quoridor::QuoridorApp
 pub fn lrgp::apps::quoridor::QuoridorApp::app_id(&self) -> &str
 pub fn lrgp::apps::quoridor::QuoridorApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -718,6 +737,36 @@ pub const lrgp::apps::morris::PIECES: usize
 pub const lrgp::apps::morris::POINTS: [&str; 24]
 pub const lrgp::apps::morris::QUIET_PLIES: usize
 pub fn lrgp::apps::morris::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::pente
+pub struct lrgp::apps::pente::PenteApp(_)
+impl lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::new() -> Self
+impl core::default::Default for lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::app_id(&self) -> &str
+pub fn lrgp::apps::pente::PenteApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::pente::PenteApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::pente::PenteApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::pente::PenteApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::pente::PenteApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::pente::PenteApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::pente::PenteApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::version(&self) -> u32
+pub const lrgp::apps::pente::APP_ID: &str
+pub const lrgp::apps::pente::APP_VERSION: u32
+pub const lrgp::apps::pente::CAPTURES_TO_WIN: usize
+pub const lrgp::apps::pente::SIZE: usize
+pub fn lrgp::apps::pente::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::quoridor
 pub struct lrgp::apps::quoridor::QuoridorApp(_)
 impl lrgp::apps::quoridor::QuoridorApp

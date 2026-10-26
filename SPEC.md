@@ -1150,6 +1150,27 @@ applied; hydration MUST check it against the replayed position.
 - Reference game (Appendix F.4 policy): seed 15, won by White when Black
   is left without a move.
 
+### G.7 Pente (`pente.1`)
+
+- The board is 19×19 (`a1`–`s19`). A move places a stone on an empty
+  square; there is no opening restriction.
+- **Captures.** If the new stone and another stone of the mover's color
+  flank exactly two opposing stones in a straight line (horizontally,
+  vertically, or diagonally), those two stones are removed and the mover
+  scores one captured pair. Every such pair around the new stone is
+  captured. Placing a stone between two opposing stones is safe, and lines
+  of one or three opposing stones are never captured.
+- After captures, five or more in a row through the new stone wins, and
+  otherwise a fifth captured pair wins. Filling the last empty square
+  without either draws.
+- `legal_moves` lists the empty squares by ascending rank, then file.
+- Additional local metadata: `black_captures` and `white_captures`
+  (captured pairs).
+- Board reasons: `5ir` (five in a row), `cap` (five captured pairs), and
+  `ful` (full board).
+- Reference game (Appendix F.4 policy): seed 13, won by White's fifth
+  captured pair.
+
 ## H. Battleship Reference Game
 
 Battleship (`battleship.1`) is a built-in two-player game with hidden
