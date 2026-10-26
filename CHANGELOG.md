@@ -4,6 +4,10 @@
 
 ### Added
 
+- **Ultimate Tic-Tac-Toe (`ultimate_ttt.1`)** — nine Tic-Tac-Toe boards on
+  one 9x9 board, built on the single-token engine. The cell you take sends
+  your opponent to the matching small board; three small boards in a row
+  wins. Moves are a square such as `e5`. SPEC.md Appendix G.1 is normative.
 - **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
   built-in stone-placement games sharing one wire contract: moves are a
   single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each

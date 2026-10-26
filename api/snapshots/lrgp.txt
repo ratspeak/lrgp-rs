@@ -223,6 +223,25 @@ pub fn lrgp::apps::tictactoe::TicTacToeApp::upsert_session(&self, lrgp::session:
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::app_id(&self) -> &str
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::version(&self) -> u32
 pub mod lrgp::apps
 pub mod lrgp::apps::checkers
 pub struct lrgp::apps::checkers::CheckersApp
@@ -483,6 +502,35 @@ pub fn lrgp::apps::tictactoe::TicTacToeApp::upsert_session(&self, lrgp::session:
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::version(&self) -> u32
+pub mod lrgp::apps::ultimate_ttt
+pub struct lrgp::apps::ultimate_ttt::UltimateTicTacToeApp(_)
+impl lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::new() -> Self
+impl core::default::Default for lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::app_id(&self) -> &str
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::version(&self) -> u32
+pub const lrgp::apps::ultimate_ttt::APP_ID: &str
+pub const lrgp::apps::ultimate_ttt::APP_VERSION: u32
+pub const lrgp::apps::ultimate_ttt::SIZE: usize
+pub fn lrgp::apps::ultimate_ttt::force_coin(core::option::Option<bool>)
 pub fn lrgp::apps::builtin_games() -> alloc::vec::Vec<alloc::boxed::Box<dyn lrgp::app_base::GameApp>>
 pub mod lrgp::constants
 pub const lrgp::constants::CMD_ACCEPT: &str

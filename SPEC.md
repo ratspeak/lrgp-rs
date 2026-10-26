@@ -988,3 +988,36 @@ as Black: Dots and Boxes with seed 1 and Mancala with seed 4, both won by
 White after Black's last move. A Mancala draw is the same policy with seed
 3. Conforming implementations MUST reproduce every legal-move list and the
 final move payload of each game.
+
+## G. More Single-Token Reference Games
+
+The games in this appendix are built-in two-player games that use the
+Appendix E.1 wire contract unchanged (payload schema, canonical command
+payloads, the `b` coin flip, replay, metadata, and hydration) except where a
+game says otherwise. Black (`b`) is the first mover. All use session type
+`turn_based` and validation `both`. This appendix defines LRGP reference
+applications; it does not change the base LRGP protocol version.
+
+### G.1 Ultimate Tic-Tac-Toe (`ultimate_ttt.1`)
+
+- The board is 9×9 (`a1`–`i9`), split into nine 3×3 small boards. A
+  square's small board is `(file / 3, rank / 3)` and its cell inside that
+  board is `(file % 3, rank % 3)`, counting files and ranks from 0.
+- The first move may be any square. After that, the cell a player takes
+  names the small board the opponent must play in: a move on the top-right
+  cell of any small board sends the opponent to the top-right small board.
+  If that small board is finished, the opponent may play on any empty
+  square of any unfinished small board.
+- Three in a row of one color inside a small board wins that small board.
+  A small board filled without a line is dead and counts for nobody. No
+  move may be played in a finished small board.
+- Three small boards won by one color in a row (on the 3×3 grid of small
+  boards) wins the game. When every small board is finished without such a
+  line, the game is drawn.
+- `legal_moves` lists the open squares by ascending rank, then file.
+- Additional local metadata: `boards`, nine characters for the small boards
+  row-major from the top-left one: `_` open, `b` or `w` won, `d` dead.
+- Board reasons: `3ib` (three boards in a row) and `ful` (every board
+  finished).
+- Reference games (Appendix F.4 policy): seed 4, won by White, and seed
+  19, drawn after Black finishes the last small board.

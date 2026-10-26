@@ -8,6 +8,7 @@ pub mod mancala;
 mod placement;
 pub mod reversi;
 pub mod tictactoe;
+pub mod ultimate_ttt;
 
 use crate::app_base::GameApp;
 
@@ -28,6 +29,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(reversi::ReversiApp::new()),
         Box::new(dots_and_boxes::DotsAndBoxesApp::new()),
         Box::new(mancala::MancalaApp::new()),
+        Box::new(ultimate_ttt::UltimateTicTacToeApp::new()),
     ]
 }
 
@@ -81,6 +83,7 @@ mod tests {
             "reversi",
             "dots_and_boxes",
             "mancala",
+            "ultimate_ttt",
         ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }

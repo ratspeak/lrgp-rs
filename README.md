@@ -15,7 +15,7 @@ LRGP carries game actions in LXMF custom fields over any reachable Reticulum pat
 - **Replay protection** — every envelope carries an 8-byte CSPRNG nonce; receivers maintain identity-scoped bounded LRUs with an absolute 10-minute TTL
 - **Participant binding** — every session is bound to its authenticated remote peer before state-changing actions are accepted
 - **Bounded admission** — unsolicited pending challenges are capped per participant and local identity without evicting active games
-- **Built-in games** — Tic-Tac-Toe, Chess (via `cozy-chess`), Four in a Row, Checkers, Hex, Gomoku, Reversi, Dots and Boxes, and Mancala
+- **Built-in games** — Tic-Tac-Toe, Chess (via `cozy-chess`), Four in a Row, Checkers, Hex, Gomoku, Reversi, Dots and Boxes, Mancala, and Ultimate Tic-Tac-Toe
 
 ## Quick Start
 
@@ -69,6 +69,7 @@ src/
     reversi.rs     # Built-in Reversi (8x8, automatic passing)
     dots_and_boxes.rs # Built-in Dots and Boxes (5x5 boxes, extra turns)
     mancala.rs     # Built-in Mancala (Kalah, six pits of four seeds)
+    ultimate_ttt.rs # Built-in Ultimate Tic-Tac-Toe (nine small boards)
 ```
 
 ## Building a Game
