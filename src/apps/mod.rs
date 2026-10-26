@@ -7,6 +7,7 @@ pub mod go;
 pub mod gomoku;
 pub mod hex;
 pub mod mancala;
+pub mod morris;
 mod placement;
 pub mod quoridor;
 pub mod reversi;
@@ -36,6 +37,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(go::GoApp::new()),
         Box::new(battleship::BattleshipApp::new()),
         Box::new(quoridor::QuoridorApp::new()),
+        Box::new(morris::MorrisApp::new()),
     ]
 }
 
@@ -93,6 +95,7 @@ mod tests {
             "go",
             "battleship",
             "quoridor",
+            "morris",
         ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }

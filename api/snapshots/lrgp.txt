@@ -223,6 +223,25 @@ pub fn lrgp::apps::mancala::MancalaApp::upsert_session(&self, lrgp::session::Ses
 pub fn lrgp::apps::mancala::MancalaApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::mancala::MancalaApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::mancala::MancalaApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::app_id(&self) -> &str
+pub fn lrgp::apps::morris::MorrisApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::morris::MorrisApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::morris::MorrisApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::morris::MorrisApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::morris::MorrisApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::morris::MorrisApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::morris::MorrisApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::quoridor::QuoridorApp
 pub fn lrgp::apps::quoridor::QuoridorApp::app_id(&self) -> &str
 pub fn lrgp::apps::quoridor::QuoridorApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -572,6 +591,37 @@ pub const lrgp::apps::mancala::APP_VERSION: u32
 pub const lrgp::apps::mancala::PITS: usize
 pub const lrgp::apps::mancala::SEEDS: u8
 pub fn lrgp::apps::mancala::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::morris
+pub struct lrgp::apps::morris::MorrisApp(_)
+impl lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::new() -> Self
+impl core::default::Default for lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::app_id(&self) -> &str
+pub fn lrgp::apps::morris::MorrisApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::morris::MorrisApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::morris::MorrisApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::morris::MorrisApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::morris::MorrisApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::morris::MorrisApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::morris::MorrisApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::version(&self) -> u32
+pub const lrgp::apps::morris::APP_ID: &str
+pub const lrgp::apps::morris::APP_VERSION: u32
+pub const lrgp::apps::morris::PIECES: usize
+pub const lrgp::apps::morris::POINTS: [&str; 24]
+pub const lrgp::apps::morris::QUIET_PLIES: usize
+pub fn lrgp::apps::morris::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::quoridor
 pub struct lrgp::apps::quoridor::QuoridorApp(_)
 impl lrgp::apps::quoridor::QuoridorApp

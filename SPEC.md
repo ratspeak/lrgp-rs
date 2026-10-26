@@ -1079,6 +1079,41 @@ applications; it does not change the base LRGP protocol version.
 - Reference games (Appendix F.4 policy): seed 63, won by White's pawn,
   and seed 0, drawn by a third repetition.
 
+### G.4 Nine Men's Morris (`morris.1`)
+
+- The board has 24 points named like squares on a 7×7 board: `a1 a4 a7 b2
+  b4 b6 c3 c4 c5 d1 d2 d3 d5 d6 d7 e3 e4 e5 f2 f4 f6 g1 g4 g7`. They lie on
+  sixteen lines of three, the mills: the rows `a1 d1 g1`, `b2 d2 f2`,
+  `c3 d3 e3`, `a4 b4 c4`, `e4 f4 g4`, `c5 d5 e5`, `b6 d6 f6`, `a7 d7 g7` and
+  the columns `a1 a4 a7`, `b2 b4 b6`, `c3 c4 c5`, `d1 d2 d3`, `d5 d6 d7`,
+  `e3 e4 e5`, `f2 f4 f6`, `g1 g4 g7`. Two points are adjacent when they are
+  next to each other on a mill.
+- Each player starts with nine pieces in hand. While a player has pieces in
+  hand, a move places one on an empty point (`d2`). After that, a move
+  slides a piece to an adjacent empty point (`d2-d3`); a player with
+  exactly three pieces left may move a piece to any empty point.
+- A move that completes a mill of the mover's color MUST also remove one
+  opposing piece, written `x` and its point (`d2xg7`, `d2-d3xg7`). A piece
+  in a mill may be removed only when every opposing piece is in a mill. A
+  move that completes no mill has no removal, and completing two mills at
+  once still removes one piece.
+- After a move, the opponent loses if it has fewer than three pieces on the
+  board and in hand together, or if it has no legal move. The game is drawn
+  when a position (all points, both hands, and the side to move) occurs for
+  the third time, or after 100 plies in a row without a removal.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- `board` is 24 characters, one per point in the order above: `_`, `b`, or
+  `w`.
+- Additional local metadata: `black_in_hand`, `white_in_hand`,
+  `black_count`, and `white_count` (pieces on the board).
+- Board reasons: `np` (fewer than three pieces), `nm` (no legal move),
+  `3fr` (threefold repetition), and `50m` (100 plies without a removal).
+- Reference games (Appendix F.4 policy): seed 30, won by White on pieces
+  after flying moves, and seed 22, drawn by 100 plies without a removal.
+
+Single-token games with more than one board reason record the reason that
+applied; hydration MUST check it against the replayed position.
+
 ## H. Battleship Reference Game
 
 Battleship (`battleship.1`) is a built-in two-player game with hidden

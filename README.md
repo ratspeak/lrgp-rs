@@ -15,7 +15,7 @@ LRGP carries game actions in LXMF custom fields over any reachable Reticulum pat
 - **Replay protection** — every envelope carries an 8-byte CSPRNG nonce; receivers maintain identity-scoped bounded LRUs with an absolute 10-minute TTL
 - **Participant binding** — every session is bound to its authenticated remote peer before state-changing actions are accepted
 - **Bounded admission** — unsolicited pending challenges are capped per participant and local identity without evicting active games
-- **Built-in games** — Tic-Tac-Toe, Chess (via `cozy-chess`), Four in a Row, Checkers, Hex, Gomoku, Reversi, Dots and Boxes, Mancala, Ultimate Tic-Tac-Toe, Go, Battleship, and Quoridor
+- **Built-in games** — Tic-Tac-Toe, Chess (via `cozy-chess`), Four in a Row, Checkers, Hex, Gomoku, Reversi, Dots and Boxes, Mancala, Ultimate Tic-Tac-Toe, Go, Battleship, Quoridor, and Nine Men's Morris
 
 ## Quick Start
 
@@ -73,6 +73,7 @@ src/
     go.rs          # Built-in Go (9x9, area scoring, superko)
     battleship.rs  # Built-in Battleship (committed fleets, revealed at the end)
     quoridor.rs    # Built-in Quoridor (9x9, ten walls each)
+    morris.rs      # Built-in Nine Men's Morris (placing, moving, flying)
 ```
 
 ## Building a Game

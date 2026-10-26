@@ -22,6 +22,11 @@
   placing walls in the other player's way, without ever shutting a pawn in.
   Moves are a square (`e2`) or a wall (`c3h`, `c3v`); a third repetition
   draws. SPEC.md Appendix G.3 is normative.
+- **Nine Men's Morris (`morris.1`)** — place nine pieces, then slide them
+  along the lines, flying once down to three; every mill removes an
+  opponent piece. Moves read `d2`, `d2-d3`, or `d2-d3xg7` with a removal.
+  Repetition and 100 quiet plies draw. SPEC.md Appendix G.4 is normative.
+  Single-token games can now record more than one win or draw reason.
 - **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
   built-in stone-placement games sharing one wire contract: moves are a
   single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each

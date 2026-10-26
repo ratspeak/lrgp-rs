@@ -131,6 +131,15 @@ pub(crate) trait PlacementRules: Send + Sync + 'static {
     /// Apply a canonical move to an ongoing position, or say why it is illegal.
     fn play(position: &mut Self::Position, notation: &str) -> Result<(), String>;
     fn outcome(position: &Self::Position) -> Outcome;
+    /// Local `terminal_reason` for the finished `position`; games with more
+    /// than one way to win or draw override it.
+    fn reason(position: &Self::Position) -> &'static str {
+        match Self::outcome(position) {
+            Outcome::Ongoing => "",
+            Outcome::Win(_) => Self::WIN_REASON,
+            Outcome::Draw => Self::DRAW_REASON,
+        }
+    }
     fn render(position: &Self::Position) -> String;
     /// Game-specific derived metadata.
     fn extra_metadata(_position: &Self::Position, _metadata: &mut HashMap<String, JsonValue>) {}
@@ -373,9 +382,9 @@ impl<R: PlacementRules> PlacementApp<R> {
             Outcome::Win(side) => (
                 String::new(),
                 player(session, side).ok_or_else(|| "Opponent unknown".to_string())?,
-                R::WIN_REASON,
+                R::reason(position),
             ),
-            Outcome::Draw => (String::new(), String::new(), R::DRAW_REASON),
+            Outcome::Draw => (String::new(), String::new(), R::reason(position)),
         };
         let mut moves = meta_string_list(&session.metadata, "moves");
         moves.push(notation.to_string());
@@ -681,10 +690,12 @@ impl<R: PlacementRules> PlacementApp<R> {
                             return Err(invalid("completed session must not have a turn"));
                         }
                         let consistent = match (terminal, reason, outcome) {
-                            ("win", r, Outcome::Win(side)) if r == R::WIN_REASON => {
+                            ("win", r, Outcome::Win(side)) if r == R::reason(&position) => {
                                 player(session, side).as_deref() == Some(winner)
                             }
-                            ("draw", r, Outcome::Draw) if r == R::DRAW_REASON => winner.is_empty(),
+                            ("draw", r, Outcome::Draw) if r == R::reason(&position) => {
+                                winner.is_empty()
+                            }
                             ("win", R_RESIGN, Outcome::Ongoing) => {
                                 winner == session.identity_id || winner == session.contact_hash
                             }
@@ -1995,7 +2006,12 @@ pub(crate) mod harness {
                 value_as_str(&last.payload[KEY_WINNER]),
                 Some(winner.as_str())
             );
-            assert_eq!(meta_str(&alice.metadata, "terminal_reason"), R::WIN_REASON);
+            let moves = meta_string_list(&alice.metadata, "moves");
+            let position = replay::<R>(&moves).unwrap();
+            assert_eq!(
+                meta_str(&alice.metadata, "terminal_reason"),
+                R::reason(&position)
+            );
         } else {
             assert_eq!(terminal, "draw");
             assert!(R::CAN_DRAW);
