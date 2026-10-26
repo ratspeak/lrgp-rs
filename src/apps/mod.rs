@@ -8,6 +8,7 @@ pub mod gomoku;
 pub mod hex;
 pub mod mancala;
 mod placement;
+pub mod quoridor;
 pub mod reversi;
 pub mod tictactoe;
 pub mod ultimate_ttt;
@@ -34,6 +35,7 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(ultimate_ttt::UltimateTicTacToeApp::new()),
         Box::new(go::GoApp::new()),
         Box::new(battleship::BattleshipApp::new()),
+        Box::new(quoridor::QuoridorApp::new()),
     ]
 }
 
@@ -90,6 +92,7 @@ mod tests {
             "ultimate_ttt",
             "go",
             "battleship",
+            "quoridor",
         ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }

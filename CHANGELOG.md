@@ -18,6 +18,10 @@
   opponent's last shot, and both fleets are revealed at the end so each
   side checks the other's answers. Adds the `sha2` dependency. SPEC.md
   Appendix H is normative.
+- **Quoridor (`quoridor.1`)** — race a pawn across a 9x9 board while
+  placing walls in the other player's way, without ever shutting a pawn in.
+  Moves are a square (`e2`) or a wall (`c3h`, `c3v`); a third repetition
+  draws. SPEC.md Appendix G.3 is normative.
 - **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
   built-in stone-placement games sharing one wire contract: moves are a
   single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each

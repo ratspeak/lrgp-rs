@@ -223,6 +223,25 @@ pub fn lrgp::apps::mancala::MancalaApp::upsert_session(&self, lrgp::session::Ses
 pub fn lrgp::apps::mancala::MancalaApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::mancala::MancalaApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::mancala::MancalaApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::app_id(&self) -> &str
+pub fn lrgp::apps::quoridor::QuoridorApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::quoridor::QuoridorApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::quoridor::QuoridorApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::quoridor::QuoridorApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::reversi::ReversiApp
 pub fn lrgp::apps::reversi::ReversiApp::app_id(&self) -> &str
 pub fn lrgp::apps::reversi::ReversiApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -553,6 +572,36 @@ pub const lrgp::apps::mancala::APP_VERSION: u32
 pub const lrgp::apps::mancala::PITS: usize
 pub const lrgp::apps::mancala::SEEDS: u8
 pub fn lrgp::apps::mancala::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::quoridor
+pub struct lrgp::apps::quoridor::QuoridorApp(_)
+impl lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::new() -> Self
+impl core::default::Default for lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::app_id(&self) -> &str
+pub fn lrgp::apps::quoridor::QuoridorApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::quoridor::QuoridorApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::quoridor::QuoridorApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::quoridor::QuoridorApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::version(&self) -> u32
+pub const lrgp::apps::quoridor::APP_ID: &str
+pub const lrgp::apps::quoridor::APP_VERSION: u32
+pub const lrgp::apps::quoridor::SIZE: usize
+pub const lrgp::apps::quoridor::WALLS_EACH: usize
+pub fn lrgp::apps::quoridor::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::reversi
 pub struct lrgp::apps::reversi::ReversiApp(_)
 impl lrgp::apps::reversi::ReversiApp

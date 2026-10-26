@@ -1049,6 +1049,36 @@ applications; it does not change the base LRGP protocol version.
 - Reference game (Appendix F.4 policy): seed 12. Black passes last and
   holds more area (42 to 39), but White wins on komi.
 
+### G.3 Quoridor (`quoridor.1`)
+
+- The board is 9×9 (`a1`–`i9`). Black's pawn starts on `e1` and must reach
+  rank 9; White's starts on `e9` and must reach rank 1. Each player has ten
+  walls.
+- A wall is two squares long and sits in the grooves between squares. It is
+  named by the square below and left of its centre, in `a1`–`h8`, plus `h`
+  or `v`. `c3h` lies between ranks 3 and 4 along files c and d; `c3v` lies
+  between files c and d along ranks 3 and 4. A wall MUST NOT overlap
+  another wall of the same direction or cross a wall of the other direction
+  at the same centre, and MUST leave both pawns a path to their goal ranks
+  (pawns are ignored when finding the path). A player with no walls left
+  may only move the pawn.
+- A pawn move names the destination square. A pawn steps to an orthogonally
+  adjacent square unless a wall is in the way. If that square holds the
+  other pawn, it jumps straight over it; if a wall or the board edge is
+  behind the other pawn, it may instead step diagonally to either side of
+  the other pawn, unless a wall is in the way.
+- The first pawn to reach its goal rank wins. A position (both pawns, all
+  walls, and the side to move) that occurs for the third time draws.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- `board` is a 17×17 picture, row-major from the top-left: squares on even
+  rows and columns (`_`, `b`, `w`), `-` and `|` where a wall lies in a
+  groove or its centre, and spaces elsewhere.
+- Additional local metadata: `walls` (every placed wall, sorted by text),
+  `black_walls`, and `white_walls` (walls left).
+- Board reasons: `gol` (reached the goal) and `3fr` (threefold repetition).
+- Reference games (Appendix F.4 policy): seed 63, won by White's pawn,
+  and seed 0, drawn by a third repetition.
+
 ## H. Battleship Reference Game
 
 Battleship (`battleship.1`) is a built-in two-player game with hidden
