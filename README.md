@@ -2,22 +2,32 @@
 
 Rust implementation of the **Lightweight Reticulum Gaming Protocol (LRGP)** — a compact, session-based protocol for multiplayer games over [LXMF](https://github.com/markqvist/LXMF) / [Reticulum](https://github.com/markqvist/Reticulum) mesh networks.
 
-LRGP enables turn-based and real-time multiplayer games to run over LoRa radios, WiFi, TCP, and any other medium Reticulum supports. Game moves are encoded as tiny msgpack envelopes that fit in a single encrypted packet — no link setup needed.
+LRGP carries game actions in LXMF custom fields over any reachable Reticulum path. The built-in games are turn-based. Each packed game envelope is limited to 200 bytes; title, fallback text, stamps and the rest of LXMF add overhead. The transport chooses packet or Link delivery for the complete message.
 
 ## Features
 
-- **Compact wire format** — msgpack with single-character keys, ~60 bytes per game move
+- **Compact wire format** — MessagePack with single-character keys and a 200-byte envelope limit
 - **Game session state machine** — challenge → accept → play → win/draw/resign lifecycle
-- **`GameApp` trait** — implement this trait to create any game
+- **`GameApp` trait** — implement this trait for a two-player game
 - **`LrgpRouter`** — register games, dispatch moves, manage manifests
 - **`LrgpStore`** — SQLite persistence for game sessions and move history
-- **Transport bridge** — zero-copy conversion between LRGP envelopes and LXMF fields
+- **Transport bridge** — conversion between LRGP envelopes and native LXMF fields, with no network I/O
 - **Replay protection** — every envelope carries an 8-byte CSPRNG nonce; receivers maintain identity-scoped bounded LRUs with an absolute 10-minute TTL
 - **Participant binding** — every session is bound to its authenticated remote peer before state-changing actions are accepted
 - **Bounded admission** — unsolicited pending challenges are capped per participant and local identity without evicting active games
 - **Built-in games** — Tic-Tac-Toe, Chess (via `cozy-chess`), and Four in a Row
 
 ## Quick Start
+
+This checkout declares **0.4.1** and requires Rust **1.87+**. The crate is used from source; select the source revision or release your application has qualified. Run the local examples from the repository root:
+
+```sh
+cargo run --example basic_envelope
+cargo run --example tictactoe_game
+cargo run --example chess_game --features test-helpers
+```
+
+The chess example uses the test helper to make the challenger White. To list games in an application:
 
 ```rust
 use lrgp::router::LrgpRouter;
@@ -42,7 +52,7 @@ src/
   constants.rs     # Protocol constants, game session types, wire keys
   errors.rs        # LrgpError hierarchy
   envelope.rs      # Pack/unpack/validate LRGP envelopes (msgpack)
-  dedup.rs         # Per-session replay-dedup cache (8-byte nonce LRU)
+  dedup.rs         # Receiving-identity/session replay cache (8-byte nonces)
   session.rs       # Game session state machine and lifecycle
   app_base.rs      # GameApp trait + AppManifest
   router.rs        # Game registry and move dispatch
@@ -56,24 +66,16 @@ src/
 
 ## Building a Game
 
-Implement the `GameApp` trait:
+Implement [`GameApp`](src/app_base.rs), using the built-in
+[Tic-Tac-Toe implementation](src/apps/tictactoe.rs) as a complete example.
+The trait covers the manifest, incoming/outgoing actions, validation, rendering
+and session ownership. An application that accepts challenges must also
+implement participant binding, authorization, TTL-aware session access,
+hydration/list/removal and snapshot/rollback. The default session methods are
+not a functioning network game.
 
-```rust
-use lrgp::app_base::{AppManifest, GameApp, IncomingResult, OutgoingResult};
-
-struct MyGame;
-
-impl GameApp for MyGame {
-    fn app_id(&self) -> &str { "mygame" }
-    fn version(&self) -> u32 { 1 }
-    fn manifest(&self) -> AppManifest { /* ... */ }
-    fn handle_incoming(&self, /* ... */) -> IncomingResult { /* ... */ }
-    fn handle_outgoing(&self, /* ... */) -> OutgoingResult { /* ... */ }
-    fn validate_action(&self, /* ... */) -> (bool, Option<String>) { /* ... */ }
-    fn get_session_state(&self, /* ... */) -> HashMap<String, JsonValue> { /* ... */ }
-    fn render_fallback(&self, /* ... */) -> String { /* ... */ }
-}
-```
+Use `LrgpRouter` for network-facing dispatch. Direct game hooks assume the
+router has already checked the envelope and authenticated participant.
 
 Games embedded by an application can be registered with
 `LrgpRouter::register`. A game shipped as part of LRGP itself must also be
@@ -86,7 +88,7 @@ standard set.
 
 ## Wire Format
 
-Every game move fits in a single LXMF OPPORTUNISTIC packet (≤295 bytes total):
+LRGP uses these native MessagePack fields; the 200-byte envelope budget does not include the rest of the LXMF message:
 
 ```
 fields[0xFB] = "lrgp.v1"                    # protocol marker
@@ -103,12 +105,20 @@ Non-LRGP clients see human-readable fallback text (e.g., `"[LRGP TTT] Move 3"`, 
 
 ### Replay protection
 
-Every outbound envelope carries an 8-byte CSPRNG nonce under key `n`. Receivers probe each validated envelope without insertion, authorize its transport sender, then atomically check-and-record it before application mutation. The cache is keyed by `(receiving_identity_id, session_id, nonce)`, bounded to 512 nonces per namespace and 1,024 namespaces, and uses an absolute 10-minute TTL from first observation. Duplicates are reported as `DedupVerdict::Replay` and dropped silently. Unauthorized fresh nonces never consume or evict cache entries. Terminal-session nonces remain until that TTL expires so late transport retransmits stay deduplicated; explicit user deletion may remove only the matching local identity/session namespace.
+Every outbound envelope carries an 8-byte CSPRNG nonce under key `n`. Receivers probe each validated envelope without insertion, authorize its transport sender, then atomically check-and-record it before application mutation. The cache is keyed by `(receiving_identity_id, session_id, nonce)`, bounded to 512 nonces per namespace and 1,024 namespaces, and uses an absolute 10-minute TTL from first observation. Duplicates are reported as `DedupVerdict::Replay` and dropped silently. Unauthorized fresh nonces never consume or evict cache entries. Ending a session does not clear its nonces; normal TTL expiry and bounded-cache eviction still apply. Explicit user deletion may remove only the matching local identity/session namespace.
 
 `protocol::pack_envelope`, `protocol::pack_lxmf_fields`, and byte decoders are
 checked APIs. They reject non-canonical fields, unsupported lexical forms,
 oversize envelopes, and trailing bytes rather than placing malformed LRGP data
 on the wire.
+
+Current 0.4.1 has a conformance limit: the Rust byte decoder rejects duplicate
+keys in the envelope and its direct payload map, but does not reject duplicate
+keys in maps nested deeper inside custom payload values. The Python decoder
+rejects them. The specification still requires rejection at every depth. If
+your integration accepts nested custom payloads, validate MessagePack maps
+recursively for duplicate keys at the input boundary, before normalizing maps
+or dispatching the action.
 
 `pack_lxmf_fields` returns native MessagePack values. If an integration needs
 pre-encoded field bytes, use `protocol::pack_into_preencoded_fields` and, with

@@ -73,8 +73,8 @@ impl Session {
         );
     }
 
-    /// Return the outstanding offer's owner only when the metadata is
-    /// complete and internally consistent.
+    /// Return whether the `draw_offered` metadata flag is true.
+    /// This does not check that an offer owner is present.
     pub fn has_draw_offer(&self) -> bool {
         self.metadata
             .get("draw_offered")
@@ -82,6 +82,7 @@ impl Session {
             == Some(true)
     }
 
+    /// Return the nonempty offer owner when the draw-offer flag is set.
     pub fn draw_offered_by(&self) -> Option<&str> {
         if !self.has_draw_offer() {
             return None;
@@ -98,7 +99,8 @@ pub struct SessionStateMachine;
 
 impl SessionStateMachine {
     /// Apply a command to a session, updating its status if appropriate.
-    /// If `terminal` is true, the action ends the session (e.g., winning move).
+    /// `terminal` completes an active session for an otherwise same-status action,
+    /// such as a move. Explicit transitions take precedence over this flag.
     pub fn apply_command(
         session: &mut Session,
         command: &str,
@@ -139,7 +141,10 @@ impl SessionStateMachine {
     }
 
     /// Check if a session has expired based on its TTL.
-    /// Returns `true` if the session expired (and updates session.status).
+    /// Returns `true` only when this call changes a pending or active session to
+    /// expired. The deadline is `last_action_at + TTL + TTL_GRACE_PERIOD`, and
+    /// expiry requires a time strictly after it. Already-terminal sessions return
+    /// `false`; persistence of the transition belongs to the caller.
     pub fn check_expiry(
         session: &mut Session,
         ttl: Option<&HashMap<String, f64>>,

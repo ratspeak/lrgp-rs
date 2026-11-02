@@ -1,7 +1,8 @@
 //! Four in a Row: a compact, deterministic 7x6 gravity game.
 //!
-//! The wire carries only the selected column, monotonic move number, and a
-//! terminal claim. Each peer reconstructs and validates the canonical board.
+//! Move payloads carry the selected column, sequential move number and
+//! terminal claim, plus the winner for a winning move. Each peer reconstructs
+//! and validates the board; the full board is not sent in move payloads.
 
 use std::collections::HashMap;
 use std::sync::Mutex;

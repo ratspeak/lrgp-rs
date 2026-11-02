@@ -1,6 +1,8 @@
-//! Chess app. Wire format is UCI-only `{m, n, x, r, w, dr}`; FEN and legal
-//! moves are local-only. Both peers replay UCI history (VALIDATION_BOTH).
-//! Terminal reason codes are 2-3 chars to keep envelopes ≤150 bytes.
+//! Chess moves use UCI notation. Move payloads contain `m`, `n` and `x`,
+//! with `r` for terminal reasons and `w` for a winner; draw claims use `r`.
+//! FEN and legal-move lists stay local. Both peers replay UCI history
+//! (`VALIDATION_BOTH`). Compact reason codes reduce payload size; the shared
+//! 200-byte envelope limit still applies.
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -53,7 +55,8 @@ fn flip_responder_coin() -> bool {
     (rand::thread_rng().next_u32() & 1) == 0
 }
 
-/// Pin the coin-flip for tests. Process-global; callers must serialize.
+/// Pin the coin-flip for tests; `None` restores random choice.
+/// Available with `test-helpers` or in tests. Process-global; callers must serialize.
 #[cfg(any(test, feature = "test-helpers"))]
 pub fn force_coin(challenger_is_white: Option<bool>) {
     if let Ok(mut guard) = FORCED_COIN.lock() {

@@ -5,7 +5,8 @@
 //! `(receiving_identity_id, session_id, nonce)` tuples. If an inbound
 //! envelope's nonce is already in that namespace, it is treated as a
 //! retransmit and dropped; otherwise the nonce is recorded and the envelope is
-//! dispatched normally.
+//! dispatched normally. Callers must first validate the full envelope and
+//! authenticate its sender; this cache checks only the session and nonce fields.
 //!
 //! The normative cross-implementation contract is the repository's `SPEC.md`.
 //!
@@ -14,10 +15,10 @@
 //! * Scoped by receiving identity and session so cross-identity/session nonce
 //!   reuse (negligible but free to isolate) cannot cause a false reject.
 //! * Inner and outer LRU bounds prevent unbounded growth.
-//! * TTL bound makes the cache forget nonces older than any realistic round
-//!   trip, which limits memory for sessions that never reach terminal state.
-//! * Terminal-session entries deliberately remain through their normal TTL so
-//!   late transport retransmits cannot produce duplicate UI/state events.
+//! * The default ten-minute TTL limits retained replay history. A repeat can be
+//!   fresh after its entry expires or is evicted by a capacity limit.
+//! * Terminal sessions are not explicitly removed: their entries remain until
+//!   TTL expiry or capacity eviction, just like other sessions.
 
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -30,9 +31,11 @@ use crate::envelope::Envelope;
 /// Verdict returned by [`ReplayDedup::check`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DedupVerdict {
-    /// First time we've seen this envelope; dispatch it.
+    /// This nonce was not already retained when checked. Check methods record
+    /// it subject to cache bounds; probe methods do not record a fresh nonce.
     Fresh,
-    /// Duplicate of a prior arrival; caller should drop it silently.
+    /// The nonce is retained, or the required session/nonce fields are malformed.
+    /// The caller should drop the envelope silently.
     Replay,
 }
 
@@ -80,11 +83,15 @@ impl ReplayDedup {
         Self::with_bounds(DEDUP_CACHE_PER_SESSION, DEDUP_TTL_SECONDS)
     }
 
+    /// Set the per-session capacity and TTL, keeping the default session-count cap.
     pub fn with_bounds(max_per_session: usize, ttl_seconds: u64) -> Self {
         Self::with_limits(max_per_session, ttl_seconds, DEDUP_CACHE_SESSIONS)
     }
 
     /// Build a cache with explicit per-session, TTL, and session-count bounds.
+    ///
+    /// `max_sessions` is clamped to at least one. A zero per-session capacity
+    /// retains no nonces, so repeated valid inputs can always be fresh.
     pub fn with_limits(max_per_session: usize, ttl_seconds: u64, max_sessions: usize) -> Self {
         Self {
             max_per_session,
@@ -98,7 +105,9 @@ impl ReplayDedup {
     ///
     /// Returns [`DedupVerdict::Replay`] if this envelope's `(session_id,
     /// nonce)` pair was already seen (caller should drop it). Otherwise
-    /// the nonce is recorded and [`DedupVerdict::Fresh`] is returned.
+    /// the nonce is recorded subject to capacity limits and [`DedupVerdict::Fresh`]
+    /// is returned. This uses a shared empty-identity namespace; integrations
+    /// serving multiple identities should use [`check_scoped`](Self::check_scoped).
     pub fn check(&mut self, envelope: &Envelope) -> DedupVerdict {
         self.check_scoped_at("", envelope, Instant::now())
     }
@@ -109,7 +118,8 @@ impl ReplayDedup {
     }
 
     /// Probe one receiving identity's namespace without recording a fresh
-    /// nonce or evicting any existing entry.
+    /// nonce or evicting entries to make room. Expired entries are pruned, and
+    /// an existing session's LRU state is refreshed.
     ///
     /// Routers use this before participant authorization, then call
     /// [`check_scoped`](Self::check_scoped) after authorization succeeds. The
@@ -122,7 +132,7 @@ impl ReplayDedup {
     /// [`check`](Self::check) with an injected clock for deterministic tests.
     ///
     /// Envelope MUST be post-`unpack_envelope` validated; missing/malformed
-    /// fields here are a protocol violation and are dropped as `Replay`.
+    /// session/nonce fields are dropped as `Replay`. Other fields are not checked.
     pub fn check_at(&mut self, envelope: &Envelope, now: Instant) -> DedupVerdict {
         self.check_scoped_at("", envelope, now)
     }

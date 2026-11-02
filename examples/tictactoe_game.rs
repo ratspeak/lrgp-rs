@@ -1,4 +1,4 @@
-//! Simulates a full TicTacToe game through the LrgpRouter.
+//! Demonstrates challenge acceptance and five TicTacToe moves through LrgpRouter.
 
 use std::collections::HashMap;
 

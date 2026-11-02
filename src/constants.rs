@@ -6,11 +6,14 @@ pub const FIELD_FILE_ATTACHMENTS: u8 = 0x05;
 /// Protocol marker stored in FIELD_CUSTOM_TYPE.
 pub const PROTOCOL_TYPE: &str = "lrgp.v1";
 
-/// Size limits (bytes).
+/// Maximum packed LRGP envelope size in bytes.
 pub const ENVELOPE_MAX_PACKED: usize = 200;
+/// Legacy content-budget estimate; it does not guarantee complete LXMF packet fit.
 pub const OPPORTUNISTIC_MAX_CONTENT: usize = 295;
+/// Legacy link-packet content estimate; measure the complete encoded message.
 pub const LINK_PACKET_MAX_CONTENT: usize = 319;
-/// 16B dest + 16B src + 64B sig + 8B ts + 8B structure.
+/// Legacy overhead estimate: 16B destination + 16B source + 64B signature +
+/// 8B timestamp + 8B structure. Actual LXMF overhead depends on encoded fields.
 pub const LXMF_OVERHEAD: usize = 112;
 
 /// Session statuses.

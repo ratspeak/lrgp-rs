@@ -9,7 +9,7 @@ fn main() {
     let env = pack_envelope("ttt", 1, "challenge", "a1b2c3d4e5f60718", None, None).unwrap();
     println!("Challenge envelope: {env:?}");
 
-    // Validate size fits OPPORTUNISTIC delivery
+    // Validate the LRGP envelope budget; complete LXMF packing adds overhead
     let size = validate_envelope_size(&env).unwrap();
     println!("Packed size: {size} bytes (max {ENVELOPE_MAX_PACKED})");
 
@@ -28,11 +28,14 @@ fn main() {
     let sid = value_as_str(recovered.get(KEY_SESSION).unwrap()).unwrap();
     println!("Recovered: app={app}, command={cmd}, session={sid}");
 
-    // Pack a move with payload
+    // Demonstrate canonical wire fields for a non-terminal TTT move.
+    // In a game, use LrgpRouter to derive these fields from local move intent.
     let mut payload = HashMap::new();
     payload.insert("i".to_string(), rmpv::Value::Integer(4.into()));
     payload.insert("b".to_string(), rmpv::Value::String("____X____".into()));
     payload.insert("n".to_string(), rmpv::Value::Integer(1.into()));
+    payload.insert("t".to_string(), rmpv::Value::String("remote_identity".into()));
+    payload.insert("x".to_string(), rmpv::Value::String("".into()));
 
     let move_env =
         pack_envelope("ttt", 1, "move", "a1b2c3d4e5f60718", Some(payload), None).unwrap();

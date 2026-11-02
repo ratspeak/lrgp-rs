@@ -116,25 +116,30 @@ does not use this transaction rollback path. An authenticated remote `error`
 consumes replay state but does not mutate a game session; if durable recording
 of that error fails, the receiver MUST remove only its accepted scoped nonce
 without restoring or deleting session state.
-Nonce entries for terminal sessions (`completed`, `declined`, or `expired`)
-MUST remain until their normal nonce TTL expires, so late transport retransmits
-remain replays. Explicit deletion of a session MAY also delete only that local
-identity/session's replay namespace.
+A terminal transition (`completed`, `declined`, or `expired`) MUST NOT itself
+clear the session's replay entries. They remain subject to the normal absolute
+TTL and bounded-cache eviction. Explicit deletion of a session MAY also delete
+only that local identity/session's replay namespace. The cache is bounded replay
+deduplication, not a durable record of every action ever received.
 
 ---
 
 ## 4. Size Constraints
 
-| Limit | Value | Source |
-|-------|-------|--------|
-| Envelope (packed) | max **200 bytes** | LRGP budget rule |
-| OPPORTUNISTIC content | max **295 bytes** | `LXMessage.ENCRYPTED_PACKET_MAX_CONTENT` |
-| DIRECT packet content | max **319 bytes** | `LXMessage.LINK_PACKET_MAX_CONTENT` |
-| LXMF overhead | **112 bytes** | 16B dest + 16B src + 64B sig + 8B ts + 8B structure |
+The packed LRGP envelope MUST be no larger than **200 bytes**. This limit
+covers only `fields[0xFD]`, not the marker, title, fallback text, timestamp,
+stamps, signature, addresses or transport framing.
 
-LXMF content is packed as `[timestamp, title, content, fields_dict]`.
+LXMF packs its message body as `[timestamp, title, content, fields_dict]`.
+Whether the complete message fits a single Opportunistic or Link packet
+depends on the LXMF/Reticulum implementation, version, fields and active Link
+limits. An integration MUST use its transport's packing and size checks; the
+LRGP `OPPORTUNISTIC_MAX_CONTENT` and `LINK_PACKET_MAX_CONTENT` constants are
+legacy estimates, not a packet-fit guarantee.
 
-If content exceeds 295 bytes, LXMF silently escalates from OPPORTUNISTIC to DIRECT delivery, which requires a full Reticulum link handshake. LRGP envelopes MUST be designed to fit within OPPORTUNISTIC limits.
+Keep fallback text short and measure the complete message. A sender may need
+Direct delivery and, for a larger Direct message, a Resource. LRGP does not
+promise that every valid envelope avoids a Link handshake.
 
 ---
 
@@ -317,7 +322,8 @@ When a receiver rejects an action, it may send the standard `error` action:
         "code": "<error_code>",
         "msg": "<human-readable message>",
         "ref": "<command that caused the error>"
-    }
+    },
+    "n": <8 fresh CSPRNG bytes>
 }
 ```
 
@@ -369,14 +375,14 @@ app/version matching the selected implementation.
 
 ## 11. Delivery Method Guidelines
 
-Games declare preferred delivery per command. LXMF auto-escalates if content exceeds limits, so these are preferences, not guarantees.
+Games declare a preferred delivery method per command. These are transport hints, not delivery guarantees. The embedding application decides how to apply them and must handle size limits, path availability and delivery failure. For example, Ratspeak 1.0.37 chooses Direct for game messages in Auto mode.
 
 | Action | Preferred | Rationale |
 |--------|-----------|-----------|
-| `challenge` | OPPORTUNISTIC | Small, fire-and-forget |
+| `challenge` | OPPORTUNISTIC | Small; avoids Link setup when the complete message fits |
 | `accept` | OPPORTUNISTIC | Small, includes initial state |
 | `decline` | OPPORTUNISTIC | Minimal payload |
-| `move` | OPPORTUNISTIC | Must fit in 295B |
+| `move` | OPPORTUNISTIC | Prefer low overhead when the complete message fits |
 | `resign` | DIRECT | Delivery confirmation important |
 | `draw_offer` | OPPORTUNISTIC | Small |
 | `draw_accept` / `draw_decline` | DIRECT | State-changing |
@@ -414,11 +420,12 @@ the same local metadata.
 
 ## 13. Large Payloads
 
-Most LRGP actions fit in a single packet. For larger data:
-
-**Strategy A**: LXMF Resource auto-escalation. If DIRECT content exceeds 319 bytes, LXMF transfers as a Resource over the link (up to ~3.2 MB). Transparent to the game layer.
-
-**Strategy B**: `FIELD_FILE_ATTACHMENTS` (`0x05`). For explicit bulk data, use the standard LXMF file attachment field alongside the LRGP envelope.
+The envelope still MUST fit the 200-byte LRGP budget. For additional data,
+an integration can use LXMF Resource delivery or a standard file attachment
+field (`FIELD_FILE_ATTACHMENTS`, `0x05`) alongside the envelope. Those bytes
+remain part of the complete LXMF message; transfer ceilings and packet versus
+Resource selection belong to the selected transport implementation and peer.
+Do not split or enlarge the LRGP envelope to bypass its validation limit.
 
 ---
 

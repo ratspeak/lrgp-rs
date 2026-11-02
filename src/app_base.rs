@@ -41,7 +41,9 @@ pub struct RemoteProtocolError {
     pub reference: String,
 }
 
-/// Fully validated outbound action, ready for the LXMF integration.
+/// Outbound action prepared by the router for an LXMF integration.
+/// Preparation applies the registered app's validation and
+/// [`crate::envelope::validate_envelope`], including its stated limits.
 #[derive(Debug, Clone)]
 pub struct PreparedOutgoing {
     pub envelope: Envelope,
@@ -99,7 +101,8 @@ pub trait GameApp: Send + Sync {
     /// Validate a local user intent before any outgoing handler mutates state.
     /// Incoming move validation often expects enriched wire fields, while the
     /// outgoing UI supplies only the user's concise intent, so the two paths
-    /// are intentionally distinct.
+    /// are intentionally distinct. The default accepts every intent; apps must
+    /// override it when local actions require validation.
     fn validate_outgoing_action(
         &self,
         _session_id: &str,
@@ -128,6 +131,7 @@ pub trait GameApp: Send + Sync {
     }
 
     /// Restore or replace one persisted session in the app's live state.
+    /// The default returns an unsupported-operation error.
     fn upsert_session(&self, _session: Session) -> Result<(), LrgpError> {
         Err(LrgpError::Validation {
             code: "unsupported_operation".into(),
@@ -135,7 +139,8 @@ pub trait GameApp: Send + Sync {
         })
     }
 
-    /// Delete one session from the app's live state.
+    /// Delete one session from the app's live state. The default returns `false`
+    /// without changing state.
     fn remove_session(&self, _session_id: &str, _identity_id: &str) -> bool {
         false
     }
@@ -179,13 +184,14 @@ pub trait GameApp: Send + Sync {
         })
     }
 
-    /// Snapshot pre-mutation state for transactional rollback. `None` for new
-    /// sessions or apps that don't support rollback. Call before `handle_outgoing`.
+    /// Snapshot state before an incoming or outgoing handler mutates it.
+    /// The default returns `None`, as do apps with no existing session.
     fn snapshot_session(&self, _session_id: &str, _identity_id: &str) -> Option<Session> {
         None
     }
 
-    /// Reverse a `handle_outgoing` mutation. `Some(snap)` restores prior state;
-    /// `None` deletes a freshly created session.
+    /// Reverse an incoming or outgoing mutation. `Some(snap)` restores prior state;
+    /// `None` deletes a freshly created session. The default does nothing;
+    /// mutable apps must override this to support transactional rollback.
     fn rollback_session(&self, _session_id: &str, _identity_id: &str, _snapshot: Option<Session>) {}
 }

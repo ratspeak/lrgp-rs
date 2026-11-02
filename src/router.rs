@@ -1,5 +1,9 @@
 //! LRGP game router — registry for game implementations and dispatch of
 //! incoming/outgoing game messages.
+//!
+//! The router mutates in-memory app state; callers own delivery and durable
+//! storage. Serialize each session's dispatch/commit/rollback sequence so a
+//! rollback cannot overwrite a newer action.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -42,14 +46,14 @@ impl LrgpRouter {
         router
     }
 
-    /// Register a game implementation.
+    /// Register a game implementation, replacing any registration with the same app ID.
     pub fn register(&self, app: Box<dyn GameApp>) {
         let id = app.app_id().to_string();
         let arc: Arc<dyn GameApp> = Arc::from(app);
         self.apps.lock().unwrap().insert(id, arc);
     }
 
-    /// List manifests for all registered games.
+    /// List manifests for all registered games, sorted by app ID.
     pub fn list_apps(&self) -> Vec<AppManifest> {
         let apps = self.apps.lock().unwrap();
         let mut manifests: Vec<_> = apps.values().map(|a| a.manifest()).collect();
@@ -57,7 +61,9 @@ impl LrgpRouter {
         manifests
     }
 
-    /// Execute a callback on a registered game by app_id.
+    /// Execute a callback on a registered game by app ID.
+    /// The registry mutex stays locked during the callback; do not re-enter
+    /// router methods that acquire it.
     pub fn with_app<F, R>(&self, app_id: &str, f: F) -> Option<R>
     where
         F: FnOnce(&dyn GameApp) -> R,
@@ -74,6 +80,10 @@ impl LrgpRouter {
     /// authenticated value to the session and rejects later mismatches, but
     /// this transport-independent crate cannot authenticate an arbitrary
     /// caller-supplied string itself.
+    ///
+    /// `Applied` may contain an application rejection in `result.error`. Only
+    /// a result without that error represents a successful app action. The
+    /// router does not send replies or persist the result.
     pub fn dispatch_incoming(
         &self,
         envelope: &Envelope,
@@ -478,6 +488,8 @@ impl LrgpRouter {
     }
 
     /// Restore one persisted session into its registered game implementation.
+    /// Checks app/version, session ID and cross-app ownership, then delegates
+    /// remaining validation and the in-memory update to `GameApp::upsert_session`.
     pub fn restore_session(&self, session: Session) -> Result<(), LrgpError> {
         let app = self
             .apps
@@ -511,7 +523,8 @@ impl LrgpRouter {
         app.upsert_session(session)
     }
 
-    /// Remove one live session and its replay cache.
+    /// Ask the app to remove one live session; clear its replay cache if removed.
+    /// This does not delete external durable records.
     pub fn remove_session(
         &self,
         app_id: &str,
@@ -538,6 +551,8 @@ impl LrgpRouter {
         Ok(removed)
     }
 
+    /// List the app's live session records, optionally restricted to one identity.
+    /// Expiry and ordering follow the registered app implementation.
     pub fn list_sessions(
         &self,
         app_id: &str,
@@ -557,14 +572,19 @@ impl LrgpRouter {
     ///
     /// Returns `None` for unknown apps, apps that don't implement rollback
     /// (the [`GameApp::snapshot_session`] default returns `None`), or sessions
-    /// that don't yet exist. The recommended transactional pattern is:
+    /// that don't yet exist. The app must implement snapshot and rollback; a
+    /// `None` snapshot does not establish that it does. Serialize the entire
+    /// operation with other actions on this session. An illustrative send path is:
     ///
     /// ```ignore
     /// let snap = router.snapshot_session(app_id, session_id, identity_id);
-    /// let prepared = router.dispatch_outgoing(...)?;
+    /// let prepared = router.dispatch_outgoing_to(
+    ///     app_id, version, command, session_id, &payload, identity_id, recipient_hash,
+    /// )?;
+    /// let actual_session_id = prepared.session_id.clone();
     /// match send_lxmf(prepared.envelope, prepared.fallback_text) {
-    ///     Ok(_) => { /* committed */ }
-    ///     Err(_) => router.rollback_outgoing(app_id, session_id, identity_id, snap)?,
+    ///     Ok(_) => { /* Continue the integration's persistence/delivery handling. */ }
+    ///     Err(_) => router.rollback_outgoing(app_id, &actual_session_id, identity_id, snap)?,
     /// }
     /// ```
     pub fn snapshot_session(
@@ -612,6 +632,8 @@ impl LrgpRouter {
     /// after a failed LXMF send. `Some(session)` restores prior state via
     /// [`GameApp::rollback_session`]; `None` means the dispatch created a
     /// fresh session that should now be deleted (the app decides how).
+    /// The default app rollback does nothing. This does not undo a durable
+    /// write or retract a message already delivered.
     /// See [`snapshot_session`](Self::snapshot_session) for
     /// the full transactional pattern.
     pub fn rollback_outgoing(
@@ -632,8 +654,8 @@ impl LrgpRouter {
     /// Reverse one successfully applied inbound mutation after its external
     /// durable transaction fails.
     ///
-    /// This restores `snapshot` (or deletes a session freshly created by the
-    /// dispatch when it is `None`) and releases only the accepted replay key
+    /// This asks the app to restore `snapshot` (or delete a session freshly
+    /// created when it is `None`) and releases only the accepted replay key
     /// `(identity_id, session_id, nonce)`. The exact same authenticated
     /// envelope can therefore be retried without weakening replay protection
     /// for any other envelope, session, or receiving identity.
@@ -642,20 +664,21 @@ impl LrgpRouter {
     /// whose durable commit failed. Do not use it for a replay, a remote
     /// protocol error, or an application rejection. The caller should retain
     /// the pre-dispatch snapshot and the nonce returned by canonical envelope
-    /// validation:
+    /// validation. The app must implement rollback; its default is a no-op.
+    /// Serialize the full dispatch/commit/rollback sequence for this session:
     ///
     /// ```ignore
     /// let validated = validate_envelope(&envelope)?;
     /// let snapshot = router.snapshot_session(app_id, session_id, identity_id);
-    /// let applied = router.dispatch_incoming(&envelope, authenticated_sender, identity_id)?;
-    /// if durable_commit(&applied).is_err() {
-    ///     router.rollback_incoming(
-    ///         app_id,
-    ///         session_id,
-    ///         identity_id,
-    ///         &validated.nonce,
-    ///         snapshot,
-    ///     )?;
+    /// match router.dispatch_incoming(&envelope, authenticated_sender, identity_id)? {
+    ///     IncomingDispatch::Applied(result) if result.error.is_none() => {
+    ///         if durable_commit(&result).is_err() {
+    ///             router.rollback_incoming(
+    ///                 app_id, session_id, identity_id, &validated.nonce, snapshot,
+    ///             )?;
+    ///         }
+    ///     }
+    ///     _ => { /* Handle rejection, replay or remote error separately. */ }
     /// }
     /// ```
     pub fn rollback_incoming(

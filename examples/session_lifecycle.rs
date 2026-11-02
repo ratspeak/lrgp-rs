@@ -1,11 +1,12 @@
-//! Demonstrates the LRGP game session state machine.
+//! Demonstrates the local LRGP session state machine, without a router or transport.
+//! Network integration must use LrgpRouter for participant, payload and replay checks.
 
 use lrgp::protocol::{CMD_ACCEPT, CMD_CHALLENGE, CMD_DECLINE, CMD_MOVE};
 use lrgp::session::{Session, SessionStateMachine};
 
 fn main() {
     // Create a new session (starts in "pending" state)
-    let mut session = Session::new("demo-session-001");
+    let mut session = Session::new("0123456789abcdef");
     session.app_id = "ttt".to_string();
     session.contact_hash = "abcdef0123456789".to_string();
     session.initiator = "abcdef0123456789".to_string();
@@ -37,7 +38,7 @@ fn main() {
 
     // Demonstrate expiry
     println!("\n--- Expiry demo ---");
-    let mut pending = Session::new("expiry-demo");
+    let mut pending = Session::new("0123456789abcde0");
     pending.last_action_at = 1000.0; // far in the past
     let expired = SessionStateMachine::check_expiry(&mut pending, None, Some(1_000_000.0));
     println!(
@@ -47,7 +48,7 @@ fn main() {
 
     // Demonstrate decline
     println!("\n--- Decline demo ---");
-    let mut challenged = Session::new("decline-demo");
+    let mut challenged = Session::new("0123456789abcde1");
     let status = SessionStateMachine::apply_command(&mut challenged, CMD_DECLINE, false).unwrap();
     println!("After decline: status={status}");
 

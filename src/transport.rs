@@ -31,7 +31,8 @@ fn decode_one(field: &str, data: &[u8]) -> Result<rmpv::Value, LrgpError> {
     Ok(value)
 }
 
-/// Check whether an LXMF fields dict contains an LRGP game message.
+/// Check only for a correctly encoded `lrgp.v1` type marker.
+/// Missing or malformed markers return `false`; envelope metadata is not checked.
 pub fn is_lrgp_message(fields: &HashMap<u8, Vec<u8>>) -> bool {
     match fields.get(&FIELD_CUSTOM_TYPE) {
         Some(data) => decode_one("type field", data)
@@ -48,8 +49,11 @@ pub fn is_lrgp_message(fields: &HashMap<u8, Vec<u8>>) -> bool {
 ///   1. Check `fields[0xFB]` for the `lrgp.v1` protocol marker.
 ///   2. Decode `fields[0xFD]` from msgpack bytes into an rmpv::Value.
 ///   3. Convert that value into a `HashMap<String, Value>` envelope.
+///   4. Apply [`envelope::validate_envelope`], including its stated limits.
 ///
-/// Returns `Ok(None)` if the message is not an LRGP message.
+/// Returns `Ok(None)` for an absent or nonmatching marker. Malformed marker
+/// encoding, trailing bytes, or invalid metadata after a matching marker return
+/// an error. Each input field must encode one complete native MessagePack value.
 pub fn extract_envelope(fields: &HashMap<u8, Vec<u8>>) -> Result<Option<Envelope>, LrgpError> {
     let type_data = match fields.get(&FIELD_CUSTOM_TYPE) {
         Some(d) => d,
@@ -114,7 +118,9 @@ pub fn pack_into_fields(envelope: &Envelope) -> Result<HashMap<u8, Vec<u8>>, Lrg
     pack_into_preencoded_fields(envelope)
 }
 
-/// Convert raw LXMF field bytes into typed rmpv values (for use with envelope::unpack_envelope).
+/// Decode each pre-encoded native MessagePack field into an rmpv value.
+/// Trailing bytes in any field are rejected. This does not validate LRGP fields;
+/// pass the result to [`envelope::unpack_envelope`] when needed.
 pub fn fields_bytes_to_rmpv(
     fields: &HashMap<u8, Vec<u8>>,
 ) -> Result<HashMap<u8, rmpv::Value>, LrgpError> {

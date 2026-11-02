@@ -1,4 +1,8 @@
 //! LRGP game store — SQLite persistence for game sessions and action history.
+//!
+//! Session and action writes are separate operations; calling both does not
+//! create a shared transaction. This store does not apply game rules or TTL policy.
+//! Integrations needing an atomic session/action commit must provide that boundary.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -153,6 +157,9 @@ impl LrgpStore {
 
     /// Update mutable columns of a session (allowlist-validated). Participant
     /// and initiator bindings are intentionally immutable after insertion.
+    ///
+    /// Only column names are validated; values are strings and are not checked
+    /// against session rules. An empty update or a missing row succeeds.
     pub fn update_session(
         &self,
         session_id: &str,
@@ -197,7 +204,8 @@ impl LrgpStore {
         Ok(())
     }
 
-    /// Retrieve a session by primary key.
+    /// Retrieve a session by `(session_id, identity_id)` without applying expiry.
+    /// Malformed stored metadata is read as an empty map.
     pub fn get_session(
         &self,
         session_id: &str,
@@ -223,7 +231,9 @@ impl LrgpStore {
         Ok(result)
     }
 
-    /// List sessions, optionally filtered by status and/or identity.
+    /// List sessions filtered by any supplied identity, status and app ID,
+    /// newest `updated_at` first. This does not apply expiry; malformed stored
+    /// metadata is read as an empty map.
     pub fn list_sessions(
         &self,
         identity_id: Option<&str>,
@@ -279,7 +289,7 @@ impl LrgpStore {
         Ok(sessions)
     }
 
-    /// Delete a session and its actions.
+    /// Delete one identity's session and its actions in a single transaction.
     pub fn delete_session(&self, session_id: &str, identity_id: &str) -> Result<(), LrgpError> {
         let mut conn = self.conn.lock().unwrap();
         let transaction = conn
@@ -307,8 +317,8 @@ impl LrgpStore {
 
     // ──── Actions ────
 
-    /// Save a game action. Duplicate action numbers are rejected so immutable
-    /// history cannot be silently rewritten.
+    /// Insert a game action. An existing `(session_id, identity_id, action_num)`
+    /// is rejected; this does not validate the action or require a stored session.
     pub fn save_action(&self, action: &Action) -> Result<(), LrgpError> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
@@ -368,7 +378,8 @@ impl LrgpStore {
         Ok(actions)
     }
 
-    /// Get the next action number for a session.
+    /// Return the largest stored action number plus one, or one for an empty history.
+    /// This does not reserve the number for a later insert.
     pub fn next_action_num(&self, session_id: &str, identity_id: &str) -> Result<i64, LrgpError> {
         let conn = self.conn.lock().unwrap();
         let max: Option<i64> = conn

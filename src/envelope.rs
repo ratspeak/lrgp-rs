@@ -8,11 +8,10 @@ use crate::errors::LrgpError;
 /// An LRGP envelope — the top-level dict stored in LXMF field 0xFD.
 pub type Envelope = HashMap<String, rmpv::Value>;
 
-/// Canonically validated envelope fields.
+/// Fields returned by [`validate_envelope`], subject to its validation limits.
 ///
-/// Construct this only through [`validate_envelope`]. Keeping validation in a
-/// single entry point prevents the transport and router from interpreting the
-/// same wire map differently.
+/// Use that function to construct this value. It checks the envelope grammar
+/// and immediate payload map, but does not recursively validate nested maps.
 #[derive(Debug, Clone)]
 pub struct ValidatedEnvelope {
     pub app_id: String,
@@ -85,7 +84,8 @@ fn build_envelope(
 }
 
 /// Validate that the packed envelope fits within ENVELOPE_MAX_PACKED.
-/// Returns the packed size in bytes.
+/// Returns the packed size in bytes. This checks size only; use
+/// [`validate_envelope`] for field and identifier validation.
 pub fn validate_envelope_size(envelope: &Envelope) -> Result<usize, LrgpError> {
     let packed = encode_envelope_map(envelope)?;
     let size = packed.len();
@@ -95,7 +95,13 @@ pub fn validate_envelope_size(envelope: &Envelope) -> Result<usize, LrgpError> {
     Ok(size)
 }
 
-/// Validate every protocol-level envelope invariant shared by all LRGP apps.
+/// Validate the outer fields, identifier grammar, payload map and packed size.
+///
+/// Immediate payload duplicates are rejected. The outer input is already a
+/// `HashMap`, so duplicate outer keys must be rejected before conversion;
+/// [`unpack_from_bytes`] and [`unpack_envelope`] do that through [`map_from_value`].
+/// Maps nested inside payload values are not recursively checked for duplicates;
+/// this is not complete recursive validation of the normative wire contract.
 ///
 /// App registration, supported version, and supported action checks belong to
 /// the router because they depend on its live app registry.
@@ -186,7 +192,7 @@ pub fn is_valid_session_id(session_id: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
-/// Return true for the canonical game identifier grammar.
+/// Return true for the ASCII game identifier grammar `[a-z][a-z0-9_.-]*`.
 pub fn is_valid_app_id(app_id: &str) -> bool {
     let mut bytes = app_id.bytes();
     matches!(bytes.next(), Some(b'a'..=b'z'))
@@ -195,7 +201,7 @@ pub fn is_valid_app_id(app_id: &str) -> bool {
         })
 }
 
-/// Return true for the canonical command grammar.
+/// Return true for the ASCII command grammar `[a-z][a-z0-9_]*`.
 pub fn is_valid_command(command: &str) -> bool {
     let mut bytes = command.bytes();
     matches!(bytes.next(), Some(b'a'..=b'z'))
@@ -213,7 +219,8 @@ pub fn pack_lxmf_fields(envelope: &Envelope) -> Result<HashMap<u8, rmpv::Value>,
 }
 
 /// Extract and validate an LRGP envelope from LXMF fields.
-/// Returns `None` if this is not an LRGP message.
+/// Returns `Ok(None)` for an absent or nonmatching type marker. A matching
+/// marker with missing or invalid metadata returns an error.
 pub fn unpack_envelope(fields: &HashMap<u8, rmpv::Value>) -> Result<Option<Envelope>, LrgpError> {
     let custom_type = fields.get(&FIELD_CUSTOM_TYPE);
     let is_lrgp = match custom_type {
@@ -236,7 +243,10 @@ pub fn unpack_envelope(fields: &HashMap<u8, rmpv::Value>) -> Result<Option<Envel
     Ok(Some(envelope))
 }
 
-/// Split "app_id.version" into (app_id, version).
+/// Split at the last dot into an app ID and a positive `u32` decimal version.
+///
+/// Versions cannot contain signs or leading zeroes. This helper does not check
+/// the app ID grammar; use [`is_valid_app_id`] or [`validate_envelope`].
 pub fn parse_app_version(app_ver_string: &str) -> Option<(&str, u32)> {
     let dot = app_ver_string.rfind('.')?;
     let app_id = &app_ver_string[..dot];
@@ -262,7 +272,10 @@ pub fn value_from_map(map: HashMap<String, rmpv::Value>) -> rmpv::Value {
     rmpv::Value::Map(pairs)
 }
 
-/// Try to convert an rmpv::Value::Map into a HashMap<String, Value>.
+/// Convert a map with unique UTF-8 string keys into a `HashMap`.
+///
+/// Returns `None` for a non-map, a non-string/invalid UTF-8 key, or a duplicate
+/// key at this level. Nested values are copied without recursive validation.
 pub fn map_from_value(value: &rmpv::Value) -> Option<HashMap<String, rmpv::Value>> {
     match value {
         rmpv::Value::Map(pairs) => {
@@ -290,7 +303,8 @@ pub(crate) fn has_exact_keys(payload: &HashMap<String, rmpv::Value>, expected: &
     payload.len() == expected.len() && payload.keys().all(|key| expected.contains(&key.as_str()))
 }
 
-/// Serialize an Envelope to msgpack bytes using rmpv.
+/// Validate an envelope, then serialize it to MessagePack bytes using rmpv.
+/// Map ordering follows the `HashMap`; this is not a canonical byte encoding.
 pub fn pack_to_bytes(envelope: &Envelope) -> Result<Vec<u8>, LrgpError> {
     validate_envelope(envelope)?;
     encode_envelope_map(envelope)
@@ -304,7 +318,11 @@ fn encode_envelope_map(envelope: &Envelope) -> Result<Vec<u8>, LrgpError> {
     Ok(buf)
 }
 
-/// Deserialize msgpack bytes into an Envelope.
+/// Decode exactly one MessagePack map and validate its envelope fields.
+///
+/// Trailing bytes are rejected. The packed-size check happens after decoding
+/// and re-encoding; callers should bound incoming buffers before decoding.
+/// Nested-map validation has the limits documented by [`validate_envelope`].
 pub fn unpack_from_bytes(data: &[u8]) -> Result<Envelope, LrgpError> {
     let envelope = decode_envelope_map(data)?;
     validate_envelope(&envelope)?;
