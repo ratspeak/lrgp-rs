@@ -114,8 +114,8 @@ on the wire.
 
 Current 0.4.1 has a conformance limit: the Rust byte decoder rejects duplicate
 keys in the envelope and its direct payload map, but does not reject duplicate
-keys in maps nested deeper inside custom payload values. The Python decoder
-rejects them. The specification still requires rejection at every depth. If
+keys in maps nested deeper inside custom payload values.
+The specification still requires rejection at every depth. If
 your integration accepts nested custom payloads, validate MessagePack maps
 recursively for duplicate keys at the input boundary, before normalizing maps
 or dispatching the action.
