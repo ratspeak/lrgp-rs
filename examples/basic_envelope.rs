@@ -34,7 +34,10 @@ fn main() {
     payload.insert("i".to_string(), rmpv::Value::Integer(4.into()));
     payload.insert("b".to_string(), rmpv::Value::String("____X____".into()));
     payload.insert("n".to_string(), rmpv::Value::Integer(1.into()));
-    payload.insert("t".to_string(), rmpv::Value::String("remote_identity".into()));
+    payload.insert(
+        "t".to_string(),
+        rmpv::Value::String("remote_identity".into()),
+    );
     payload.insert("x".to_string(), rmpv::Value::String("".into()));
 
     let move_env =
