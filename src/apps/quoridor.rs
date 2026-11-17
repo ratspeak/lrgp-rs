@@ -178,7 +178,7 @@ const DIRECTIONS: [(isize, isize); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
 
 /// A wall token: a square in `a1`–`h8` and `h` or `v`.
 fn parse_wall(notation: &str) -> Option<(usize, usize, bool)> {
-    let (square, kind) = notation.split_at(notation.len().checked_sub(1)?);
+    let (square, kind) = notation.split_at(notation.char_indices().last()?.0);
     let horizontal = match kind {
         "h" => true,
         "v" => false,
@@ -405,6 +405,13 @@ placement::placement_app!(
 mod tests {
     use super::*;
     use crate::apps::placement::{play_checked, replay};
+
+    #[test]
+    fn a_wall_ending_in_a_wide_character_is_refused() {
+        assert!(
+            parse_wall("é").is_none() && parse_wall("e5é").is_none() && parse_wall("").is_none()
+        );
+    }
 
     fn game(moves: &[&str]) -> Result<QuoridorPosition, String> {
         let moves: Vec<String> = moves.iter().map(|m| m.to_string()).collect();

@@ -91,7 +91,7 @@ pub fn parse_fleet(text: &str) -> Option<Vec<Vec<usize>>> {
     let mut taken = [false; CELLS];
     let mut ships = Vec::new();
     for (token, &length) in tokens.iter().zip(FLEET.iter()) {
-        let (square, direction) = token.split_at(token.len().checked_sub(1)?);
+        let (square, direction) = token.split_at(token.char_indices().last()?.0);
         let start = parse_square(square, SIZE)?;
         let (file, rank) = (start % SIZE, start / SIZE);
         let step = match direction {
@@ -1701,6 +1701,11 @@ mod tests {
     use super::*;
     use crate::apps::placement::harness::{ALICE, BOB, SID};
     use crate::envelope::{pack_envelope, validate_envelope_size};
+
+    #[test]
+    fn a_fleet_with_a_wide_character_is_refused() {
+        assert!(parse_fleet("é é é é é").is_none() && parse_fleet("a1é a2h a3h a4h a5h").is_none());
+    }
 
     const ALICE_FLEET: &str = "a1h a2h a3h a4h a5h";
     const BOB_FLEET: &str = "a10h a9h a8h a7h a6h";
