@@ -1,1 +1,4 @@
 *.bin binary
+# Move-list fixtures are hashed and shared byte-for-byte with lrgp-rs.
+*_reference.txt text eol=lf
+*_draw.txt text eol=lf

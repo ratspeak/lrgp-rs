@@ -2,6 +2,75 @@
 
 ## Unreleased
 
+### Added
+
+- **Ultimate Tic-Tac-Toe (`ultimate_ttt.1`)** — nine Tic-Tac-Toe boards on
+  one 9x9 board, built on the single-token engine. The cell you take sends
+  your opponent to the matching small board; three small boards in a row
+  wins. Moves are a square such as `e5`. SPEC.md Appendix G.1 is normative.
+- **Go (`go.1`)** — 9x9 Go with area scoring, positional superko, and 7.5
+  komi. Moves are a point such as `e5` or `pass`; two passes in a row end
+  the game and every stone left on the board counts. SPEC.md Appendix G.2
+  is normative.
+- **Battleship (`battleship.1`)** — the first game with hidden
+  information. Each player commits to a 10x10 fleet with a SHA-256 hash of
+  the fleet and a random salt; every shot carries the answer to the
+  opponent's last shot, and both fleets are revealed at the end so each
+  side checks the other's answers. Adds the `sha2` dependency. SPEC.md
+  Appendix H is normative.
+- **Quoridor (`quoridor.1`)** — race a pawn across a 9x9 board while
+  placing walls in the other player's way, without ever shutting a pawn in.
+  Moves are a square (`e2`) or a wall (`c3h`, `c3v`); a third repetition
+  draws. SPEC.md Appendix G.3 is normative.
+- **Nine Men's Morris (`morris.1`)** — place nine pieces, then slide them
+  along the lines, flying once down to three; every mill removes an
+  opponent piece. Moves read `d2`, `d2-d3`, or `d2-d3xg7` with a removal.
+  Repetition and 100 quiet plies draw. SPEC.md Appendix G.4 is normative.
+  Single-token games can now record more than one win or draw reason.
+- **Breakthrough (`breakthrough.1`)** — two rows of pieces each on an 8x8
+  board, stepping forward and capturing diagonally; the first piece to the
+  far rank wins. Moves read `a2b3`. SPEC.md Appendix G.5 is normative.
+- **Amazons (`amazons.1`)** — move a queen-like amazon on a 10x10 board,
+  then shoot an arrow that burns a square for good; whoever runs out of
+  moves loses. Moves read `d1d7/g7`. SPEC.md Appendix G.6 is normative.
+- **Pente (`pente.1`)** — Gomoku on a 19x19 board with captures:
+  flanking two opposing stones removes them, and five in a row or five
+  captured pairs wins. SPEC.md Appendix G.7 is normative.
+- **Rock Paper Scissors (`rps.1`)** — first to three rounds, the first
+  `round_based` game. The leader commits to each choice with a SHA-256
+  hash before the follower picks, then reveals it with the next round's
+  commitment, so neither side can wait and see. SPEC.md Appendix I is
+  normative.
+- **Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`)** — three
+  built-in stone-placement games sharing one wire contract: moves are a
+  single square such as `h8` in `{m, n, x}` (plus `w` on a win), and each
+  peer replays the history. Hex is 11x11 with the swap rule, Gomoku is 15x15
+  freestyle (five or more wins), and Reversi passes automatically when a
+  player has no legal move, so its winner can be the non-mover. Hydration
+  replays the stored history. SPEC.md Appendix E is normative.
+- **Dots and Boxes (`dots_and_boxes.1`) and Mancala (`mancala.1`)** — two
+  more built-ins on the same engine and wire contract. Dots and Boxes is a
+  5x5-box grid with moves naming a line (`c3h`, `c3v`); completing a box
+  claims it and earns another move. Mancala uses Kalah rules with six pits of
+  four seeds, moves naming a pit (`a`–`l`), extra turns for ending in your
+  store, and captures from an empty pit of your own. Extra turns need no
+  message: each peer derives who moves next. SPEC.md Appendix F is normative.
+- Cross-language fixtures for the single-token games, including one reference
+  game per game (a Hex swap, a Reversi automatic pass, a Dots and Boxes
+  double box, and Mancala extra turns and captures; Reversi, Dots and Boxes,
+  and Mancala are each won by the player who did not move last) plus a
+  full-board Gomoku draw and a 24–24 Mancala draw, all shared with `lrgp-py`.
+
+- **Checkers (`checkers.1`)** — built-in American checkers / English
+  draughts with mandatory captures, completed multi-jumps, crowning that ends
+  the move, and two-side validation by replay. Move envelopes carry a
+  space-separated square path such as `a5 c3 e1` in `{m, n, x}` (plus `r`/`w`
+  for a win); threefold-repetition and forty-move draws are claim-based.
+  Hydration replays the stored history and rejects inconsistent records.
+- Cross-language Checkers binary fixtures and a 33-ply reference game shared
+  with `lrgp-py`; both engines must agree on every legal-move list and on
+  the final winning payload.
+
 ## 0.4.1 — 2026-08-17
 
 ### Added

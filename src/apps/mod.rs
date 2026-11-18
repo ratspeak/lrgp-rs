@@ -1,6 +1,22 @@
+pub mod amazons;
+pub mod battleship;
+pub mod breakthrough;
+pub mod checkers;
 pub mod chess;
+pub mod dots_and_boxes;
 pub mod four_in_a_row;
+pub mod go;
+pub mod gomoku;
+pub mod hex;
+pub mod mancala;
+pub mod morris;
+pub mod pente;
+mod placement;
+pub mod quoridor;
+pub mod reversi;
+pub mod rps;
 pub mod tictactoe;
+pub mod ultimate_ttt;
 
 use crate::app_base::GameApp;
 
@@ -15,6 +31,21 @@ pub fn builtin_games() -> Vec<Box<dyn GameApp>> {
         Box::new(tictactoe::TicTacToeApp::new()),
         Box::new(chess::ChessApp::new()),
         Box::new(four_in_a_row::FourInARowApp::new()),
+        Box::new(checkers::CheckersApp::new()),
+        Box::new(hex::HexApp::new()),
+        Box::new(gomoku::GomokuApp::new()),
+        Box::new(reversi::ReversiApp::new()),
+        Box::new(dots_and_boxes::DotsAndBoxesApp::new()),
+        Box::new(mancala::MancalaApp::new()),
+        Box::new(ultimate_ttt::UltimateTicTacToeApp::new()),
+        Box::new(go::GoApp::new()),
+        Box::new(battleship::BattleshipApp::new()),
+        Box::new(quoridor::QuoridorApp::new()),
+        Box::new(morris::MorrisApp::new()),
+        Box::new(breakthrough::BreakthroughApp::new()),
+        Box::new(amazons::AmazonsApp::new()),
+        Box::new(pente::PenteApp::new()),
+        Box::new(rps::RpsApp::new()),
     ]
 }
 
@@ -29,7 +60,7 @@ mod tests {
     #[test]
     fn builtin_registry_has_unique_coherent_manifests() {
         let games = builtin_games();
-        assert!(games.len() >= 3);
+        assert!(games.len() >= 9);
 
         let mut ids = HashSet::new();
         for game in games {
@@ -58,7 +89,26 @@ mod tests {
                 ));
             }
         }
-        for built_in in ["ttt", "chess", "four_in_a_row"] {
+        for built_in in [
+            "ttt",
+            "chess",
+            "four_in_a_row",
+            "checkers",
+            "hex",
+            "gomoku",
+            "reversi",
+            "dots_and_boxes",
+            "mancala",
+            "ultimate_ttt",
+            "go",
+            "battleship",
+            "quoridor",
+            "morris",
+            "breakthrough",
+            "amazons",
+            "pente",
+            "rps",
+        ] {
             assert!(ids.contains(built_in), "missing built-in game {built_in}");
         }
     }

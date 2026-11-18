@@ -84,9 +84,9 @@
           "rename": null,
           "kind": null,
           "target": null,
-          "requirement": "^0.32",
+          "requirement": "^0.40",
           "optional": false,
-          "defaultFeatures": true,
+          "defaultFeatures": false,
           "features": [
             "bundled"
           ],
@@ -111,6 +111,17 @@
           "kind": null,
           "target": null,
           "requirement": "^1",
+          "optional": false,
+          "defaultFeatures": true,
+          "features": [],
+          "sourceKind": "registry"
+        },
+        {
+          "name": "sha2",
+          "rename": null,
+          "kind": null,
+          "target": null,
+          "requirement": "^0.10",
           "optional": false,
           "defaultFeatures": true,
           "features": [],

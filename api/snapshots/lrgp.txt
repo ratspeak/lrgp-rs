@@ -52,6 +52,82 @@ pub fn lrgp::app_base::GameApp::upsert_session(&self, lrgp::session::Session) ->
 pub fn lrgp::app_base::GameApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::app_base::GameApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::app_base::GameApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::app_id(&self) -> &str
+pub fn lrgp::apps::amazons::AmazonsApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::amazons::AmazonsApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::amazons::AmazonsApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::amazons::AmazonsApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::amazons::AmazonsApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::amazons::AmazonsApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::amazons::AmazonsApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::battleship::BattleshipApp
+pub fn lrgp::apps::battleship::BattleshipApp::app_id(&self) -> &str
+pub fn lrgp::apps::battleship::BattleshipApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::battleship::BattleshipApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::battleship::BattleshipApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::battleship::BattleshipApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::battleship::BattleshipApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::battleship::BattleshipApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::battleship::BattleshipApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::battleship::BattleshipApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::battleship::BattleshipApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::battleship::BattleshipApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::battleship::BattleshipApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::battleship::BattleshipApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::battleship::BattleshipApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::battleship::BattleshipApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::battleship::BattleshipApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::battleship::BattleshipApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::battleship::BattleshipApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::app_id(&self) -> &str
+pub fn lrgp::apps::breakthrough::BreakthroughApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::breakthrough::BreakthroughApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::breakthrough::BreakthroughApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::checkers::CheckersApp
+pub fn lrgp::apps::checkers::CheckersApp::app_id(&self) -> &str
+pub fn lrgp::apps::checkers::CheckersApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::checkers::CheckersApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::checkers::CheckersApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::checkers::CheckersApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::checkers::CheckersApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::checkers::CheckersApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::checkers::CheckersApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::checkers::CheckersApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::checkers::CheckersApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::checkers::CheckersApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::checkers::CheckersApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::checkers::CheckersApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::checkers::CheckersApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::checkers::CheckersApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::checkers::CheckersApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::checkers::CheckersApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::checkers::CheckersApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::chess::ChessApp
 pub fn lrgp::apps::chess::ChessApp::app_id(&self) -> &str
 pub fn lrgp::apps::chess::ChessApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -71,6 +147,25 @@ pub fn lrgp::apps::chess::ChessApp::upsert_session(&self, lrgp::session::Session
 pub fn lrgp::apps::chess::ChessApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::chess::ChessApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::chess::ChessApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::dots_and_boxes::DotsAndBoxesApp
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::app_id(&self) -> &str
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::four_in_a_row::FourInARowApp
 pub fn lrgp::apps::four_in_a_row::FourInARowApp::app_id(&self) -> &str
 pub fn lrgp::apps::four_in_a_row::FourInARowApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -90,6 +185,177 @@ pub fn lrgp::apps::four_in_a_row::FourInARowApp::upsert_session(&self, lrgp::ses
 pub fn lrgp::apps::four_in_a_row::FourInARowApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::four_in_a_row::FourInARowApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::four_in_a_row::FourInARowApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::go::GoApp
+pub fn lrgp::apps::go::GoApp::app_id(&self) -> &str
+pub fn lrgp::apps::go::GoApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::go::GoApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::go::GoApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::go::GoApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::go::GoApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::go::GoApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::go::GoApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::go::GoApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::go::GoApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::go::GoApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::go::GoApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::go::GoApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::go::GoApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::go::GoApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::go::GoApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::go::GoApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::go::GoApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::gomoku::GomokuApp
+pub fn lrgp::apps::gomoku::GomokuApp::app_id(&self) -> &str
+pub fn lrgp::apps::gomoku::GomokuApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::gomoku::GomokuApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::gomoku::GomokuApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::gomoku::GomokuApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::gomoku::GomokuApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::gomoku::GomokuApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::gomoku::GomokuApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::gomoku::GomokuApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::gomoku::GomokuApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::gomoku::GomokuApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::gomoku::GomokuApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::gomoku::GomokuApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::gomoku::GomokuApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::gomoku::GomokuApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::gomoku::GomokuApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::gomoku::GomokuApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::gomoku::GomokuApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::hex::HexApp
+pub fn lrgp::apps::hex::HexApp::app_id(&self) -> &str
+pub fn lrgp::apps::hex::HexApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::hex::HexApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::hex::HexApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::hex::HexApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::hex::HexApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::hex::HexApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::hex::HexApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::hex::HexApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::hex::HexApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::hex::HexApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::hex::HexApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::hex::HexApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::hex::HexApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::hex::HexApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::hex::HexApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::hex::HexApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::hex::HexApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::mancala::MancalaApp
+pub fn lrgp::apps::mancala::MancalaApp::app_id(&self) -> &str
+pub fn lrgp::apps::mancala::MancalaApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::mancala::MancalaApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::mancala::MancalaApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::mancala::MancalaApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::mancala::MancalaApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::mancala::MancalaApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::mancala::MancalaApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::mancala::MancalaApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::mancala::MancalaApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::mancala::MancalaApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::mancala::MancalaApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::mancala::MancalaApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::mancala::MancalaApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::mancala::MancalaApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::mancala::MancalaApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::mancala::MancalaApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::mancala::MancalaApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::app_id(&self) -> &str
+pub fn lrgp::apps::morris::MorrisApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::morris::MorrisApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::morris::MorrisApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::morris::MorrisApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::morris::MorrisApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::morris::MorrisApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::morris::MorrisApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::app_id(&self) -> &str
+pub fn lrgp::apps::pente::PenteApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::pente::PenteApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::pente::PenteApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::pente::PenteApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::pente::PenteApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::pente::PenteApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::pente::PenteApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::app_id(&self) -> &str
+pub fn lrgp::apps::quoridor::QuoridorApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::quoridor::QuoridorApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::quoridor::QuoridorApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::quoridor::QuoridorApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::reversi::ReversiApp
+pub fn lrgp::apps::reversi::ReversiApp::app_id(&self) -> &str
+pub fn lrgp::apps::reversi::ReversiApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::reversi::ReversiApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::reversi::ReversiApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::reversi::ReversiApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::reversi::ReversiApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::reversi::ReversiApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::reversi::ReversiApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::reversi::ReversiApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::reversi::ReversiApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::reversi::ReversiApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::reversi::ReversiApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::reversi::ReversiApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::reversi::ReversiApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::reversi::ReversiApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::reversi::ReversiApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::reversi::ReversiApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::reversi::ReversiApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::rps::RpsApp
+pub fn lrgp::apps::rps::RpsApp::app_id(&self) -> &str
+pub fn lrgp::apps::rps::RpsApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::rps::RpsApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::rps::RpsApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::rps::RpsApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::rps::RpsApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::rps::RpsApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::rps::RpsApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::rps::RpsApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::rps::RpsApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::rps::RpsApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::rps::RpsApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::rps::RpsApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::rps::RpsApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::rps::RpsApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::rps::RpsApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::rps::RpsApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::rps::RpsApp::version(&self) -> u32
 impl lrgp::app_base::GameApp for lrgp::apps::tictactoe::TicTacToeApp
 pub fn lrgp::apps::tictactoe::TicTacToeApp::app_id(&self) -> &str
 pub fn lrgp::apps::tictactoe::TicTacToeApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
@@ -109,7 +375,149 @@ pub fn lrgp::apps::tictactoe::TicTacToeApp::upsert_session(&self, lrgp::session:
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::version(&self) -> u32
+impl lrgp::app_base::GameApp for lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::app_id(&self) -> &str
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::version(&self) -> u32
 pub mod lrgp::apps
+pub mod lrgp::apps::amazons
+pub struct lrgp::apps::amazons::AmazonsApp(_)
+impl lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::new() -> Self
+impl core::default::Default for lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::amazons::AmazonsApp
+pub fn lrgp::apps::amazons::AmazonsApp::app_id(&self) -> &str
+pub fn lrgp::apps::amazons::AmazonsApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::amazons::AmazonsApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::amazons::AmazonsApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::amazons::AmazonsApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::amazons::AmazonsApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::amazons::AmazonsApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::amazons::AmazonsApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::amazons::AmazonsApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::amazons::AmazonsApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::amazons::AmazonsApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::amazons::AmazonsApp::version(&self) -> u32
+pub const lrgp::apps::amazons::APP_ID: &str
+pub const lrgp::apps::amazons::APP_VERSION: u32
+pub const lrgp::apps::amazons::SIZE: usize
+pub fn lrgp::apps::amazons::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::battleship
+pub struct lrgp::apps::battleship::BattleshipApp
+impl lrgp::apps::battleship::BattleshipApp
+pub fn lrgp::apps::battleship::BattleshipApp::new() -> Self
+impl core::default::Default for lrgp::apps::battleship::BattleshipApp
+pub fn lrgp::apps::battleship::BattleshipApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::battleship::BattleshipApp
+pub fn lrgp::apps::battleship::BattleshipApp::app_id(&self) -> &str
+pub fn lrgp::apps::battleship::BattleshipApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::battleship::BattleshipApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::battleship::BattleshipApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::battleship::BattleshipApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::battleship::BattleshipApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::battleship::BattleshipApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::battleship::BattleshipApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::battleship::BattleshipApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::battleship::BattleshipApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::battleship::BattleshipApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::battleship::BattleshipApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::battleship::BattleshipApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::battleship::BattleshipApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::battleship::BattleshipApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::battleship::BattleshipApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::battleship::BattleshipApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::battleship::BattleshipApp::version(&self) -> u32
+pub const lrgp::apps::battleship::APP_ID: &str
+pub const lrgp::apps::battleship::APP_VERSION: u32
+pub const lrgp::apps::battleship::FLEET: [usize; 5]
+pub const lrgp::apps::battleship::PHASE_CONCEDE: &str
+pub const lrgp::apps::battleship::PHASE_REVEAL: &str
+pub const lrgp::apps::battleship::PHASE_SHOOT: &str
+pub const lrgp::apps::battleship::SIZE: usize
+pub fn lrgp::apps::battleship::commitment(&str, &str) -> alloc::string::String
+pub fn lrgp::apps::battleship::force_coin(core::option::Option<bool>)
+pub fn lrgp::apps::battleship::parse_fleet(&str) -> core::option::Option<alloc::vec::Vec<alloc::vec::Vec<usize>>>
+pub fn lrgp::apps::battleship::random_fleet() -> alloc::string::String
+pub mod lrgp::apps::breakthrough
+pub struct lrgp::apps::breakthrough::BreakthroughApp(_)
+impl lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::new() -> Self
+impl core::default::Default for lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::breakthrough::BreakthroughApp
+pub fn lrgp::apps::breakthrough::BreakthroughApp::app_id(&self) -> &str
+pub fn lrgp::apps::breakthrough::BreakthroughApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::breakthrough::BreakthroughApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::breakthrough::BreakthroughApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::breakthrough::BreakthroughApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::breakthrough::BreakthroughApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::breakthrough::BreakthroughApp::version(&self) -> u32
+pub const lrgp::apps::breakthrough::APP_ID: &str
+pub const lrgp::apps::breakthrough::APP_VERSION: u32
+pub const lrgp::apps::breakthrough::SIZE: usize
+pub fn lrgp::apps::breakthrough::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::checkers
+pub struct lrgp::apps::checkers::CheckersApp
+impl lrgp::apps::checkers::CheckersApp
+pub fn lrgp::apps::checkers::CheckersApp::new() -> Self
+impl core::default::Default for lrgp::apps::checkers::CheckersApp
+pub fn lrgp::apps::checkers::CheckersApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::checkers::CheckersApp
+pub fn lrgp::apps::checkers::CheckersApp::app_id(&self) -> &str
+pub fn lrgp::apps::checkers::CheckersApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::checkers::CheckersApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::checkers::CheckersApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::checkers::CheckersApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::checkers::CheckersApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::checkers::CheckersApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::checkers::CheckersApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::checkers::CheckersApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::checkers::CheckersApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::checkers::CheckersApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::checkers::CheckersApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::checkers::CheckersApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::checkers::CheckersApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::checkers::CheckersApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::checkers::CheckersApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::checkers::CheckersApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::checkers::CheckersApp::version(&self) -> u32
+pub const lrgp::apps::checkers::APP_ID: &str
+pub const lrgp::apps::checkers::APP_VERSION: u32
+pub const lrgp::apps::checkers::STARTING_BOARD: &str
+pub fn lrgp::apps::checkers::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::chess
 pub struct lrgp::apps::chess::ChessApp
 impl lrgp::apps::chess::ChessApp
@@ -137,6 +545,35 @@ pub fn lrgp::apps::chess::ChessApp::validate_outgoing_action(&self, &str, &str, 
 pub fn lrgp::apps::chess::ChessApp::version(&self) -> u32
 pub const lrgp::apps::chess::STARTING_FEN: &str
 pub fn lrgp::apps::chess::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::dots_and_boxes
+pub struct lrgp::apps::dots_and_boxes::DotsAndBoxesApp(_)
+impl lrgp::apps::dots_and_boxes::DotsAndBoxesApp
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::new() -> Self
+impl core::default::Default for lrgp::apps::dots_and_boxes::DotsAndBoxesApp
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::dots_and_boxes::DotsAndBoxesApp
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::app_id(&self) -> &str
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::dots_and_boxes::DotsAndBoxesApp::version(&self) -> u32
+pub const lrgp::apps::dots_and_boxes::APP_ID: &str
+pub const lrgp::apps::dots_and_boxes::APP_VERSION: u32
+pub const lrgp::apps::dots_and_boxes::BOXES: usize
+pub fn lrgp::apps::dots_and_boxes::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::four_in_a_row
 pub struct lrgp::apps::four_in_a_row::FourInARowApp
 impl lrgp::apps::four_in_a_row::FourInARowApp
@@ -168,6 +605,280 @@ pub const lrgp::apps::four_in_a_row::CELL_COUNT: usize
 pub const lrgp::apps::four_in_a_row::COLUMNS: usize
 pub const lrgp::apps::four_in_a_row::EMPTY_BOARD: &str
 pub const lrgp::apps::four_in_a_row::ROWS: usize
+pub mod lrgp::apps::go
+pub struct lrgp::apps::go::GoApp(_)
+impl lrgp::apps::go::GoApp
+pub fn lrgp::apps::go::GoApp::new() -> Self
+impl core::default::Default for lrgp::apps::go::GoApp
+pub fn lrgp::apps::go::GoApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::go::GoApp
+pub fn lrgp::apps::go::GoApp::app_id(&self) -> &str
+pub fn lrgp::apps::go::GoApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::go::GoApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::go::GoApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::go::GoApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::go::GoApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::go::GoApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::go::GoApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::go::GoApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::go::GoApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::go::GoApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::go::GoApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::go::GoApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::go::GoApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::go::GoApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::go::GoApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::go::GoApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::go::GoApp::version(&self) -> u32
+pub const lrgp::apps::go::APP_ID: &str
+pub const lrgp::apps::go::APP_VERSION: u32
+pub const lrgp::apps::go::KOMI_HALF_POINTS: usize
+pub const lrgp::apps::go::PASS: &str
+pub const lrgp::apps::go::SIZE: usize
+pub fn lrgp::apps::go::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::gomoku
+pub struct lrgp::apps::gomoku::GomokuApp(_)
+impl lrgp::apps::gomoku::GomokuApp
+pub fn lrgp::apps::gomoku::GomokuApp::new() -> Self
+impl core::default::Default for lrgp::apps::gomoku::GomokuApp
+pub fn lrgp::apps::gomoku::GomokuApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::gomoku::GomokuApp
+pub fn lrgp::apps::gomoku::GomokuApp::app_id(&self) -> &str
+pub fn lrgp::apps::gomoku::GomokuApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::gomoku::GomokuApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::gomoku::GomokuApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::gomoku::GomokuApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::gomoku::GomokuApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::gomoku::GomokuApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::gomoku::GomokuApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::gomoku::GomokuApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::gomoku::GomokuApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::gomoku::GomokuApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::gomoku::GomokuApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::gomoku::GomokuApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::gomoku::GomokuApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::gomoku::GomokuApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::gomoku::GomokuApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::gomoku::GomokuApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::gomoku::GomokuApp::version(&self) -> u32
+pub const lrgp::apps::gomoku::APP_ID: &str
+pub const lrgp::apps::gomoku::APP_VERSION: u32
+pub const lrgp::apps::gomoku::SIZE: usize
+pub fn lrgp::apps::gomoku::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::hex
+pub struct lrgp::apps::hex::HexApp(_)
+impl lrgp::apps::hex::HexApp
+pub fn lrgp::apps::hex::HexApp::new() -> Self
+impl core::default::Default for lrgp::apps::hex::HexApp
+pub fn lrgp::apps::hex::HexApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::hex::HexApp
+pub fn lrgp::apps::hex::HexApp::app_id(&self) -> &str
+pub fn lrgp::apps::hex::HexApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::hex::HexApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::hex::HexApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::hex::HexApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::hex::HexApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::hex::HexApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::hex::HexApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::hex::HexApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::hex::HexApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::hex::HexApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::hex::HexApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::hex::HexApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::hex::HexApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::hex::HexApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::hex::HexApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::hex::HexApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::hex::HexApp::version(&self) -> u32
+pub const lrgp::apps::hex::APP_ID: &str
+pub const lrgp::apps::hex::APP_VERSION: u32
+pub const lrgp::apps::hex::SIZE: usize
+pub const lrgp::apps::hex::SWAP: &str
+pub fn lrgp::apps::hex::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::mancala
+pub struct lrgp::apps::mancala::MancalaApp(_)
+impl lrgp::apps::mancala::MancalaApp
+pub fn lrgp::apps::mancala::MancalaApp::new() -> Self
+impl core::default::Default for lrgp::apps::mancala::MancalaApp
+pub fn lrgp::apps::mancala::MancalaApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::mancala::MancalaApp
+pub fn lrgp::apps::mancala::MancalaApp::app_id(&self) -> &str
+pub fn lrgp::apps::mancala::MancalaApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::mancala::MancalaApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::mancala::MancalaApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::mancala::MancalaApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::mancala::MancalaApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::mancala::MancalaApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::mancala::MancalaApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::mancala::MancalaApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::mancala::MancalaApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::mancala::MancalaApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::mancala::MancalaApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::mancala::MancalaApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::mancala::MancalaApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::mancala::MancalaApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::mancala::MancalaApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::mancala::MancalaApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::mancala::MancalaApp::version(&self) -> u32
+pub const lrgp::apps::mancala::APP_ID: &str
+pub const lrgp::apps::mancala::APP_VERSION: u32
+pub const lrgp::apps::mancala::PITS: usize
+pub const lrgp::apps::mancala::SEEDS: u8
+pub fn lrgp::apps::mancala::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::morris
+pub struct lrgp::apps::morris::MorrisApp(_)
+impl lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::new() -> Self
+impl core::default::Default for lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::morris::MorrisApp
+pub fn lrgp::apps::morris::MorrisApp::app_id(&self) -> &str
+pub fn lrgp::apps::morris::MorrisApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::morris::MorrisApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::morris::MorrisApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::morris::MorrisApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::morris::MorrisApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::morris::MorrisApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::morris::MorrisApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::morris::MorrisApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::morris::MorrisApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::morris::MorrisApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::morris::MorrisApp::version(&self) -> u32
+pub const lrgp::apps::morris::APP_ID: &str
+pub const lrgp::apps::morris::APP_VERSION: u32
+pub const lrgp::apps::morris::PIECES: usize
+pub const lrgp::apps::morris::POINTS: [&str; 24]
+pub const lrgp::apps::morris::QUIET_PLIES: usize
+pub fn lrgp::apps::morris::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::pente
+pub struct lrgp::apps::pente::PenteApp(_)
+impl lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::new() -> Self
+impl core::default::Default for lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::pente::PenteApp
+pub fn lrgp::apps::pente::PenteApp::app_id(&self) -> &str
+pub fn lrgp::apps::pente::PenteApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::pente::PenteApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::pente::PenteApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::pente::PenteApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::pente::PenteApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::pente::PenteApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::pente::PenteApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::pente::PenteApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::pente::PenteApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::pente::PenteApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::pente::PenteApp::version(&self) -> u32
+pub const lrgp::apps::pente::APP_ID: &str
+pub const lrgp::apps::pente::APP_VERSION: u32
+pub const lrgp::apps::pente::CAPTURES_TO_WIN: usize
+pub const lrgp::apps::pente::SIZE: usize
+pub fn lrgp::apps::pente::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::quoridor
+pub struct lrgp::apps::quoridor::QuoridorApp(_)
+impl lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::new() -> Self
+impl core::default::Default for lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::quoridor::QuoridorApp
+pub fn lrgp::apps::quoridor::QuoridorApp::app_id(&self) -> &str
+pub fn lrgp::apps::quoridor::QuoridorApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::quoridor::QuoridorApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::quoridor::QuoridorApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::quoridor::QuoridorApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::quoridor::QuoridorApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::quoridor::QuoridorApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::quoridor::QuoridorApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::quoridor::QuoridorApp::version(&self) -> u32
+pub const lrgp::apps::quoridor::APP_ID: &str
+pub const lrgp::apps::quoridor::APP_VERSION: u32
+pub const lrgp::apps::quoridor::SIZE: usize
+pub const lrgp::apps::quoridor::WALLS_EACH: usize
+pub fn lrgp::apps::quoridor::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::reversi
+pub struct lrgp::apps::reversi::ReversiApp(_)
+impl lrgp::apps::reversi::ReversiApp
+pub fn lrgp::apps::reversi::ReversiApp::new() -> Self
+impl core::default::Default for lrgp::apps::reversi::ReversiApp
+pub fn lrgp::apps::reversi::ReversiApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::reversi::ReversiApp
+pub fn lrgp::apps::reversi::ReversiApp::app_id(&self) -> &str
+pub fn lrgp::apps::reversi::ReversiApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::reversi::ReversiApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::reversi::ReversiApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::reversi::ReversiApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::reversi::ReversiApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::reversi::ReversiApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::reversi::ReversiApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::reversi::ReversiApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::reversi::ReversiApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::reversi::ReversiApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::reversi::ReversiApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::reversi::ReversiApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::reversi::ReversiApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::reversi::ReversiApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::reversi::ReversiApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::reversi::ReversiApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::reversi::ReversiApp::version(&self) -> u32
+pub const lrgp::apps::reversi::APP_ID: &str
+pub const lrgp::apps::reversi::APP_VERSION: u32
+pub const lrgp::apps::reversi::SIZE: usize
+pub fn lrgp::apps::reversi::force_coin(core::option::Option<bool>)
+pub mod lrgp::apps::rps
+pub struct lrgp::apps::rps::RpsApp
+impl lrgp::apps::rps::RpsApp
+pub fn lrgp::apps::rps::RpsApp::new() -> Self
+impl core::default::Default for lrgp::apps::rps::RpsApp
+pub fn lrgp::apps::rps::RpsApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::rps::RpsApp
+pub fn lrgp::apps::rps::RpsApp::app_id(&self) -> &str
+pub fn lrgp::apps::rps::RpsApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::rps::RpsApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::rps::RpsApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::rps::RpsApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::rps::RpsApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::rps::RpsApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::rps::RpsApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::rps::RpsApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::rps::RpsApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::rps::RpsApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::rps::RpsApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::rps::RpsApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::rps::RpsApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::rps::RpsApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::rps::RpsApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::rps::RpsApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::rps::RpsApp::version(&self) -> u32
+pub const lrgp::apps::rps::APP_ID: &str
+pub const lrgp::apps::rps::APP_VERSION: u32
+pub const lrgp::apps::rps::CHOICES: [&str; 3]
+pub const lrgp::apps::rps::PHASE_CHOOSE: &str
+pub const lrgp::apps::rps::PHASE_COMMIT: &str
+pub const lrgp::apps::rps::PHASE_REVEAL: &str
+pub const lrgp::apps::rps::WINS_NEEDED: usize
+pub fn lrgp::apps::rps::commitment(&str, &str) -> alloc::string::String
+pub fn lrgp::apps::rps::force_coin(core::option::Option<bool>)
 pub mod lrgp::apps::tictactoe
 pub struct lrgp::apps::tictactoe::TicTacToeApp
 impl lrgp::apps::tictactoe::TicTacToeApp
@@ -193,6 +904,35 @@ pub fn lrgp::apps::tictactoe::TicTacToeApp::upsert_session(&self, lrgp::session:
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
 pub fn lrgp::apps::tictactoe::TicTacToeApp::version(&self) -> u32
+pub mod lrgp::apps::ultimate_ttt
+pub struct lrgp::apps::ultimate_ttt::UltimateTicTacToeApp(_)
+impl lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::new() -> Self
+impl core::default::Default for lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::default() -> Self
+impl lrgp::app_base::GameApp for lrgp::apps::ultimate_ttt::UltimateTicTacToeApp
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::app_id(&self) -> &str
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::authorize_incoming(&self, &str, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::bind_session_peer(&self, &str, &str, &str) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_delivery_method(&self, &str) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_record(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::get_session_state(&self, &str, &str) -> std::collections::hash::map::HashMap<alloc::string::String, serde_json::value::Value>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_incoming(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str, &str) -> lrgp::app_base::IncomingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::handle_outgoing(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> lrgp::app_base::OutgoingResult
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::list_session_records(&self, core::option::Option<&str>) -> alloc::vec::Vec<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::manifest(&self) -> lrgp::app_base::AppManifest
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::remove_session(&self, &str, &str) -> bool
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::render_fallback(&self, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>) -> alloc::string::String
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::rollback_session(&self, &str, &str, core::option::Option<lrgp::session::Session>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::snapshot_session(&self, &str, &str) -> core::option::Option<lrgp::session::Session>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::upsert_session(&self, lrgp::session::Session) -> core::result::Result<(), lrgp::errors::LrgpError>
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::validate_outgoing_action(&self, &str, &str, &std::collections::hash::map::HashMap<alloc::string::String, rmpv::Value>, &str) -> (bool, core::option::Option<alloc::string::String>)
+pub fn lrgp::apps::ultimate_ttt::UltimateTicTacToeApp::version(&self) -> u32
+pub const lrgp::apps::ultimate_ttt::APP_ID: &str
+pub const lrgp::apps::ultimate_ttt::APP_VERSION: u32
+pub const lrgp::apps::ultimate_ttt::SIZE: usize
+pub fn lrgp::apps::ultimate_ttt::force_coin(core::option::Option<bool>)
 pub fn lrgp::apps::builtin_games() -> alloc::vec::Vec<alloc::boxed::Box<dyn lrgp::app_base::GameApp>>
 pub mod lrgp::constants
 pub const lrgp::constants::CMD_ACCEPT: &str

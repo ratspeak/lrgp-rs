@@ -666,3 +666,712 @@ The three `last_*` values are null before move 1. `terminal` is `""`,
 payloads. Persistence hydration MUST revalidate gravity, marker counts,
 move count, turn, last-move coordinates, terminal status, winner identity,
 and participant bindings before accepting a stored session.
+
+---
+
+## D. Checkers Reference Game
+
+Checkers (`checkers.1`) is the built-in American checkers / English draughts
+implementation. App ID `"checkers"`, version `1`, session type `turn_based`,
+validation `both`. This appendix defines an LRGP reference application; it does
+not change the base LRGP protocol version.
+
+### Board, Rules, and Player Assignment
+
+- The board is 8x8 with files `a`–`h` and ranks `1`–`8`. `a1` is a dark
+  square; only dark squares (file index + rank index even) are playable.
+- Black men start on the dark squares of ranks 6–8 and move toward rank 1.
+  White men start on the dark squares of ranks 1–3 and move toward rank 8.
+  Black moves first.
+- A man moves one square diagonally forward. A king moves one square
+  diagonally in any direction; kings do not fly.
+- A capture jumps an adjacent opposing piece onto the empty square directly
+  beyond it. Men capture forward only; kings capture in any direction.
+- Captures are mandatory. When several captures exist the mover may choose
+  any of them, but a chosen jump sequence MUST be completed while further
+  jumps are available.
+- Jumped pieces are removed only after the move completes. During the
+  sequence they may not be jumped again and they block landing. The moving
+  piece's origin square is empty during the sequence.
+- A man that reaches the far rank is crowned and its move ends, even if the
+  new king could continue jumping.
+- A player with no legal move on their turn, including having no pieces,
+  loses.
+- White's and Black's identities are chosen by a coin flip when the responder
+  accepts; the responder sends the Black-player hash back in the `b` key of
+  the ACCEPT payload.
+
+### Wire Format Principles
+
+- **Square paths only.** Every move is a path of square names joined by single
+  ASCII spaces: the origin followed by each landing square. Examples: `a3 b4`
+  (simple move), `a5 c3 e1` (double jump), `e7 c5 a3 c1` (triple jump). Squares
+  are lowercase file plus rank digit and MUST be dark. A path has 2–13
+  squares. Any other spelling (uppercase, extra or tab whitespace, `-`/`x`
+  separators) is invalid. Board snapshots are never transmitted.
+- **State by replay.** Each peer reconstructs the current position by replaying
+  the path history from the starting position. A path that does not exactly
+  match a legal move from the replayed position, including a partial jump
+  sequence, is rejected.
+- **Draws are claim-based or negotiated.** No position is drawn automatically.
+  A peer may send `draw_offer` with `r = "3fr"` when the current position (the
+  board plus the side to move) has occurred at least three times, or with
+  `r = "40m"` when 80 consecutive plies have contained no capture and no man
+  move. The receiver verifies the claim against its replayed position. A valid
+  claim ends the game as a draw immediately (no `draw_accept` round trip); an
+  invalid claim degrades to a plain draw offer. The claimant pre-terminates its
+  local session on a valid claim.
+
+### Payload Schema
+
+| Key | Type | Used In | Description |
+|-----|------|---------|-------------|
+| `m` | str | move | Square path (`a3 b4`, `a5 c3 e1`) |
+| `n` | int | move | Ply counter, 0-based (0 = Black's first move) |
+| `x` | str | move | Terminal status: `""` or `"win"` |
+| `r` | str | move, draw_offer | Terminal reason (see codes below) or claim reason on `draw_offer` |
+| `w` | str | move (terminal=win) | Winner identity hash |
+| `b` | str | accept | Black-player (first mover) identity hash |
+
+#### Canonical Command Payloads
+
+Inbound wire payloads MUST contain exactly the keys shown; missing keys,
+additional keys, and values of the wrong MessagePack type are invalid and MUST
+be rejected before session mutation.
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{}` |
+| `accept` | `{b}` where `b` is one of the two bound participant identities |
+| `decline` | `{}` |
+| non-terminal `move` | `{m, n, x}` with `x=""` |
+| winning `move` | `{m, n, x, r, w}` with `x="win"`, `r` of `np` or `nm`, and `w` equal to the authenticated mover |
+| `resign` | `{}` |
+| plain `draw_offer` | `{}` |
+| claim `draw_offer` | `{r}` where `r` is exactly `3fr` or `40m` |
+| `draw_accept` | `{}` |
+| `draw_decline` | `{}` |
+
+The local outgoing API accepts concise intent rather than caller-forged state:
+`move` accepts exactly `{m}`; `draw_offer` accepts `{}` or exactly `{r}`; all
+other Checkers actions above accept `{}`. The game implementation derives the
+final canonical wire payload. A recognized but locally ineligible claim reason
+degrades to a plain outstanding offer while retaining `{r}` on the wire so the
+receiver independently verifies eligibility. A receiver MUST reject a
+non-sequential ply, an illegal or non-canonical path, a move by the wrong
+participant, a false or missing terminal claim, a wrong terminal reason, a
+forged winner, or any move after completion. `error` uses Section 9.
+
+### Terminal Reason Codes
+
+| Code | Meaning |
+|------|---------|
+| `np` | Opponent has no pieces left |
+| `nm` | Opponent has pieces but no legal move |
+| `3fr` | Threefold repetition (claimed) |
+| `40m` | Forty-move rule (claimed) |
+| `rsn` | Resignation |
+| `agr` | Draw by agreement |
+
+### Canonical Local Metadata
+
+The reference application exposes `board`, `moves`, `my_color`, `first_turn`,
+`turn`, `move_count`, `last_move`, `winner`, `terminal`, `terminal_reason`,
+`must_capture`, `legal_moves`, `draw_offered`, `draw_offered_by`, and
+`draw_offer_reason`. `board` is 64 ASCII cells in row-major order from `a8`
+(index 0) to `h1` (index 63): `_` empty, `b`/`w` men, `B`/`W` kings.
+`my_color` is `"b"` or `"w"` and `first_turn` is the Black player. `terminal`
+is `""`, `"win"`, or `"draw"`. Persistence hydration MUST replay `moves` and
+revalidate the board, move count, last move, colors, turn, terminal status,
+terminal reason, winner identity, claim eligibility, and participant bindings
+before accepting a stored session.
+
+---
+
+## E. Stone-Placement Reference Games
+
+Hex (`hex.1`), Gomoku (`gomoku.1`), and Reversi (`reversi.1`) are built-in
+two-player games in which every move places one stone on a named square. They
+share one wire contract (E.1) and differ only in their rules (E.2–E.4). All
+three use session type `turn_based` and validation `both`. This appendix
+defines LRGP reference applications; it does not change the base LRGP
+protocol version.
+
+### E.1 Shared Wire Contract
+
+#### Squares and Player Assignment
+
+- A square is a lowercase file letter followed by a decimal rank with no
+  leading zero: `a1` is the bottom-left square and ranks grow upward. On an
+  N×N board files run `a` onward for N letters and ranks run `1`–`N`. Any
+  other spelling is invalid.
+- Black moves first. The responder flips a coin when accepting and sends the
+  Black player's identity in the `b` key of the ACCEPT payload.
+- Each peer reconstructs the position by replaying the accepted move history
+  from the starting position. Boards, legal-move lists, and next-turn
+  identities are never transmitted.
+
+#### Payload Schema
+
+| Key | Type | Used In | Description |
+|-----|------|---------|-------------|
+| `m` | str | move | Square (`h8`), or `swap` in Hex |
+| `n` | int | move | Ply counter, 0-based: the number of moves already played |
+| `x` | str | move | Terminal status: `""`, `"win"`, or `"draw"` |
+| `w` | str | move (terminal=win) | Winner identity hash |
+| `b` | str | accept | Black-player (first mover) identity hash |
+
+#### Canonical Command Payloads
+
+Inbound wire payloads MUST contain exactly the keys shown; missing keys,
+additional keys, and values of the wrong MessagePack type are invalid and MUST
+be rejected before session mutation.
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{}` |
+| `accept` | `{b}` where `b` is one of the two bound participant identities |
+| `decline` | `{}` |
+| non-terminal `move` | `{m, n, x}` with `x=""` |
+| winning `move` | `{m, n, x, w}` with `x="win"` and `w` equal to the identity the replayed position names as winner |
+| drawn `move` | `{m, n, x}` with `x="draw"` (Gomoku and Reversi only) |
+| `resign` | `{}` |
+| `draw_offer` | `{}` |
+| `draw_accept` | `{}` |
+| `draw_decline` | `{}` |
+
+The local outgoing API accepts exactly `{m}` for `move` and `{}` for every
+other action above. The implementation derives `n`, the terminal claim, the
+winner, and the next turn. A receiver MUST independently replay the history
+and reject a non-sequential ply, a non-canonical or illegal square, a move by
+the participant who is not to move, a false or missing terminal claim, a
+forged winner, or any move after completion. A winning move's `w` is the
+identity that the rules declare the winner, which in Reversi need not be the
+mover. Draws may also be negotiated with `draw_offer` and `draw_accept`; no
+draw claims exist. `error` uses Section 9.
+
+#### Canonical Local Metadata
+
+The reference applications expose `board`, `moves`, `my_color`, `first_turn`,
+`turn`, `move_count`, `last_move`, `legal_moves`, `winner`, `terminal`,
+`terminal_reason`, `draw_offered`, and `draw_offered_by`. `board` holds N×N
+ASCII cells row-major from the top-left square (`a` on rank N) to the
+bottom-right square (the last file on rank 1): `_` empty, `b` Black, `w`
+White. `my_color` is `"b"` or `"w"` and `first_turn` is the Black player.
+`legal_moves` lists the moves available to the player to move in canonical
+order (squares by ascending rank, then file; `swap` last) and is empty after
+the game ends. `terminal_reason` is `rsn` for resignation, `agr` for a
+negotiated draw, or the game's board reason below. Persistence hydration MUST
+replay `moves` and revalidate the board, move count, last move, colors, turn,
+terminal status, terminal reason, winner identity, and participant bindings
+before accepting a stored session. When a session expires, any outstanding
+draw offer is cleared.
+
+### E.2 Hex (`hex.1`)
+
+- The board is 11×11 (`a1`–`k11`). Cell `(file, rank)` touches the six cells
+  at file±1 on the same rank, rank±1 on the same file, `(file+1, rank-1)`,
+  and `(file-1, rank+1)`.
+- Black wins by connecting rank 1 to rank 11 with a chain of Black stones;
+  White wins by connecting file `a` to file `k`. A move onto an occupied cell
+  is illegal. Hex cannot end in a draw, so `x="draw"` is never valid.
+- **Swap rule.** As the second move of the game only (`n=1`), White may send
+  `m="swap"`. Black's single stone is removed and a White stone is placed on
+  the mirrored cell, the one with file and rank exchanged (`c7` becomes
+  `g3`). Each player keeps its color and Black moves next, so turns still
+  alternate.
+- Board reason: `con` (connected).
+
+### E.3 Gomoku (`gomoku.1`)
+
+- The board is 15×15 (`a1`–`o15`). Freestyle rules: a stone that completes
+  five or more consecutive stones of one color horizontally, vertically, or
+  diagonally wins. A move onto an occupied square is illegal.
+- Filling the last empty square without completing five draws the game.
+- Board reasons: `5ir` (five in a row) and `ful` (full board).
+
+### E.4 Reversi (`reversi.1`)
+
+- The board is 8×8 (`a1`–`h8`). The game starts with White on `d4` and `e5`
+  and Black on `d5` and `e4`.
+- A move MUST bracket at least one straight line, in any of the eight
+  directions, of one or more opposing discs between the new disc and another
+  disc of the mover's color. Every bracketed disc is flipped.
+- **Automatic passing.** After a move, if the opponent has a legal move it is
+  the opponent's turn. Otherwise, if the mover still has a legal move, the
+  mover moves again and no pass message is sent. Otherwise the game is over.
+- When the game is over the side with more discs wins and equal counts draw.
+  The winner need not be the player who made the last move, so a winning
+  move's `w` is the identity with more discs.
+- Additional local metadata: `black_count`, `white_count`, and
+  `skipped_turn`, which is true when the last move left the opponent without
+  a move.
+- Board reason: `cnt` (disc count) for both wins and draws.
+
+## F. Dots and Boxes and Mancala Reference Games
+
+Dots and Boxes (`dots_and_boxes.1`) and Mancala (`mancala.1`) are built-in
+two-player games in which every move is a single token and a move can earn
+the mover another turn. They use the Appendix E.1 wire contract unchanged
+(payload schema, canonical command payloads, the `b` coin flip, replay, and
+hydration) except for the differences below. Both use session type
+`turn_based` and validation `both`. This appendix defines LRGP reference
+applications; it does not change the base LRGP protocol version.
+
+### F.1 Differences from E.1
+
+- **Move tokens.** `m` is a line (F.2) or a pit (F.3), not a square. Any
+  other spelling is invalid.
+- **Roles.** `b` (Black) is the first mover and `w` (White) the second;
+  `my_color` and `first_turn` keep their E.1 meaning.
+- **Extra turns.** After each move the rules decide who moves next. A move
+  that earns another turn is an ordinary `{m, n, x}` move; no pass or
+  continue message exists, and `n` still counts every move played. A
+  receiver MUST reject a move from the participant the replayed position
+  does not name as next to move.
+- **Board.** `board` uses the encoding given for each game below.
+- **Winner.** A winning move's `w` is the identity with more boxes or
+  seeds, which need not be the mover.
+
+### F.2 Dots and Boxes (`dots_and_boxes.1`)
+
+- The grid is 5×5 boxes on 6×6 dots. Dots are named like squares on a 6×6
+  board (`a1`–`f6`).
+- A line is a dot followed by `h` for the line to the dot on its right or
+  `v` for the line to the dot above it: `c3h` joins c3 and d3, `c3v` joins
+  c3 and c4. Dots on file `f` have no `h` line and dots on rank 6 have no
+  `v` line, so there are 60 lines. Drawing a line that is already drawn is
+  illegal.
+- A move that completes one or two boxes claims them for the mover, who
+  then moves again. Otherwise the turn passes.
+- The game ends when every box is claimed; the side with more boxes wins.
+  With 25 boxes a draw is impossible, so `x="draw"` is never valid.
+- `legal_moves` lists undrawn lines by dot (ascending rank, then file), `h`
+  before `v` at the same dot.
+- `board` is an 11×11 picture row-major from the top-left dot (`a6`): `+`
+  for a dot, `-` or `|` for a drawn line, a space for an undrawn line, and
+  `_`, `b`, or `w` for an unclaimed or claimed box.
+- Additional local metadata: `black_boxes`, `white_boxes`, and
+  `extra_turn`, which is true when the last move claimed a box.
+- Board reason: `cnt` (box count).
+
+### F.3 Mancala (`mancala.1`)
+
+- Kalah rules with six pits per side and four seeds in each pit. Black's
+  pits are `a`–`f` from Black's left to right, followed by Black's store;
+  White's pits are `g`–`l` from White's left to right, followed by White's
+  store. Pit `a` faces `l`, `b` faces `k`, and so on to `f` facing `g`.
+- A move names one of the mover's own non-empty pits. Its seeds are lifted
+  and sown one per hole in the order `a`…`f`, Black's store, `g`…`l`,
+  White's store, and around again, skipping the opponent's store.
+- If the last seed lands in the mover's store, the mover moves again. If it
+  lands in an empty pit of the mover's own and the facing pit holds seeds,
+  that seed and the facing pit's seeds go to the mover's store.
+- After any move, if either player's six pits are all empty the game ends:
+  each player adds the seeds left in their own pits to their own store.
+  More seeds in the store wins and 24–24 draws. A game that ends this way
+  ends even if the last move landed in the mover's store.
+- `legal_moves` lists the mover's non-empty pits alphabetically.
+- `board` is the fourteen hole counts in sowing order, comma-separated:
+  `a`–`f`, Black's store, `g`–`l`, White's store. The opening board is
+  `4,4,4,4,4,4,0,4,4,4,4,4,4,0`.
+- Additional local metadata: `black_store`, `white_store`, and
+  `extra_turn`, which is true when the last seed landed in the mover's
+  store.
+- Board reason: `cnt` (store count) for both wins and draws.
+
+### F.4 Reference Games
+
+The shared fixtures include one reference game per game, played by the
+self-play policy `legal[(ply * 7 + seed) % len(legal)]` with the challenger
+as Black: Dots and Boxes with seed 1 and Mancala with seed 4, both won by
+White after Black's last move. A Mancala draw is the same policy with seed
+3. Conforming implementations MUST reproduce every legal-move list and the
+final move payload of each game.
+
+## G. More Single-Token Reference Games
+
+The games in this appendix are built-in two-player games that use the
+Appendix E.1 wire contract unchanged (payload schema, canonical command
+payloads, the `b` coin flip, replay, metadata, and hydration) except where a
+game says otherwise. Black (`b`) is the first mover. All use session type
+`turn_based` and validation `both`. This appendix defines LRGP reference
+applications; it does not change the base LRGP protocol version.
+
+### G.1 Ultimate Tic-Tac-Toe (`ultimate_ttt.1`)
+
+- The board is 9×9 (`a1`–`i9`), split into nine 3×3 small boards. A
+  square's small board is `(file / 3, rank / 3)` and its cell inside that
+  board is `(file % 3, rank % 3)`, counting files and ranks from 0.
+- The first move may be any square. After that, the cell a player takes
+  names the small board the opponent must play in: a move on the top-right
+  cell of any small board sends the opponent to the top-right small board.
+  If that small board is finished, the opponent may play on any empty
+  square of any unfinished small board.
+- Three in a row of one color inside a small board wins that small board.
+  A small board filled without a line is dead and counts for nobody. No
+  move may be played in a finished small board.
+- Three small boards won by one color in a row (on the 3×3 grid of small
+  boards) wins the game. When every small board is finished without such a
+  line, the game is drawn.
+- `legal_moves` lists the open squares by ascending rank, then file.
+- Additional local metadata: `boards`, nine characters for the small boards
+  row-major from the top-left one: `_` open, `b` or `w` won, `d` dead.
+- Board reasons: `3ib` (three boards in a row) and `ful` (every board
+  finished).
+- Reference games (Appendix F.4 policy): seed 4, won by White, and seed
+  19, drawn after Black finishes the last small board.
+
+### G.2 Go (`go.1`)
+
+- The board is 9×9 (`a1`–`i9`; file `i` is used, unlike some Go
+  coordinates). A move is an empty point or `pass`.
+- A stone placed next to opposing chains removes every opposing chain left
+  without a liberty (an empty orthogonal neighbor). A move that leaves its
+  own chain without a liberty after those captures is suicide and illegal.
+- **Positional superko.** A move MUST NOT recreate any board that occurred
+  earlier in the game, including the empty starting board. Passing never
+  breaks this rule.
+- Two passes in a row end the game. There is no dead-stone agreement:
+  every stone on the board counts as alive, so players capture dead stones
+  before passing (under area scoring this costs nothing).
+- **Area scoring.** Each side scores its stones plus the empty regions that
+  border only its own stones. White adds 7.5 points of komi, so the game
+  cannot be drawn and `x="draw"` is never valid. The final move is always
+  the second pass, and a winning move's `w` is the identity with the higher
+  score, which need not be the mover.
+- `legal_moves` lists the legal points by ascending rank, then file, and
+  `pass` last.
+- Additional local metadata: `black_count` and `white_count` (the area
+  score of the current board, without komi), `komi` (`7.5`), and
+  `black_captures` and `white_captures` (stones each side has captured).
+- Board reason: `cnt` (area count).
+- Reference game (Appendix F.4 policy): seed 12. Black passes last and
+  holds more area (42 to 39), but White wins on komi.
+
+### G.3 Quoridor (`quoridor.1`)
+
+- The board is 9×9 (`a1`–`i9`). Black's pawn starts on `e1` and must reach
+  rank 9; White's starts on `e9` and must reach rank 1. Each player has ten
+  walls.
+- A wall is two squares long and sits in the grooves between squares. It is
+  named by the square below and left of its centre, in `a1`–`h8`, plus `h`
+  or `v`. `c3h` lies between ranks 3 and 4 along files c and d; `c3v` lies
+  between files c and d along ranks 3 and 4. A wall MUST NOT overlap
+  another wall of the same direction or cross a wall of the other direction
+  at the same centre, and MUST leave both pawns a path to their goal ranks
+  (pawns are ignored when finding the path). A player with no walls left
+  may only move the pawn.
+- A pawn move names the destination square. A pawn steps to an orthogonally
+  adjacent square unless a wall is in the way. If that square holds the
+  other pawn, it jumps straight over it; if a wall or the board edge is
+  behind the other pawn, it may instead step diagonally to either side of
+  the other pawn, unless a wall is in the way.
+- The first pawn to reach its goal rank wins. A position (both pawns, all
+  walls, and the side to move) that occurs for the third time draws.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- `board` is a 17×17 picture, row-major from the top-left: squares on even
+  rows and columns (`_`, `b`, `w`), `-` and `|` where a wall lies in a
+  groove or its centre, and spaces elsewhere.
+- Additional local metadata: `walls` (every placed wall, sorted by text),
+  `black_walls`, and `white_walls` (walls left).
+- Board reasons: `gol` (reached the goal) and `3fr` (threefold repetition).
+- Reference games (Appendix F.4 policy): seed 63, won by White's pawn,
+  and seed 0, drawn by a third repetition.
+
+### G.4 Nine Men's Morris (`morris.1`)
+
+- The board has 24 points named like squares on a 7×7 board: `a1 a4 a7 b2
+  b4 b6 c3 c4 c5 d1 d2 d3 d5 d6 d7 e3 e4 e5 f2 f4 f6 g1 g4 g7`. They lie on
+  sixteen lines of three, the mills: the rows `a1 d1 g1`, `b2 d2 f2`,
+  `c3 d3 e3`, `a4 b4 c4`, `e4 f4 g4`, `c5 d5 e5`, `b6 d6 f6`, `a7 d7 g7` and
+  the columns `a1 a4 a7`, `b2 b4 b6`, `c3 c4 c5`, `d1 d2 d3`, `d5 d6 d7`,
+  `e3 e4 e5`, `f2 f4 f6`, `g1 g4 g7`. Two points are adjacent when they are
+  next to each other on a mill.
+- Each player starts with nine pieces in hand. While a player has pieces in
+  hand, a move places one on an empty point (`d2`). After that, a move
+  slides a piece to an adjacent empty point (`d2-d3`); a player with
+  exactly three pieces left may move a piece to any empty point.
+- A move that completes a mill of the mover's color MUST also remove one
+  opposing piece, written `x` and its point (`d2xg7`, `d2-d3xg7`). A piece
+  in a mill may be removed only when every opposing piece is in a mill. A
+  move that completes no mill has no removal, and completing two mills at
+  once still removes one piece.
+- After a move, the opponent loses if it has fewer than three pieces on the
+  board and in hand together, or if it has no legal move. The game is drawn
+  when a position (all points, both hands, and the side to move) occurs for
+  the third time, or after 100 plies in a row without a removal.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- `board` is 24 characters, one per point in the order above: `_`, `b`, or
+  `w`.
+- Additional local metadata: `black_in_hand`, `white_in_hand`,
+  `black_count`, and `white_count` (pieces on the board).
+- Board reasons: `np` (fewer than three pieces), `nm` (no legal move),
+  `3fr` (threefold repetition), and `50m` (100 plies without a removal).
+- Reference games (Appendix F.4 policy): seed 30, won by White on pieces
+  after flying moves, and seed 22, drawn by 100 plies without a removal.
+
+Single-token games with more than one board reason record the reason that
+applied; hydration MUST check it against the replayed position.
+
+### G.5 Breakthrough (`breakthrough.1`)
+
+- The board is 8×8 (`a1`–`h8`). Black starts with sixteen pieces on ranks
+  1 and 2 and moves up the board; White starts on ranks 7 and 8 and moves
+  down.
+- A move is a piece's square followed by its destination with nothing in
+  between (`a2b3`). A piece steps one square forward, straight or
+  diagonally. A straight step needs an empty square; a diagonal step goes
+  to an empty square or captures an opposing piece there.
+- A piece that reaches the far rank wins, and capturing every opposing
+  piece wins. A side with pieces always has a move, so the game cannot be
+  drawn and `x="draw"` is never valid.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- Additional local metadata: `black_count` and `white_count`.
+- Board reasons: `gol` (reached the far rank) and `np` (no pieces left).
+- Reference game (Appendix F.4 policy): seed 18, won by White reaching
+  rank 1.
+
+### G.6 Amazons (`amazons.1`)
+
+- The board is 10×10 (`a1`–`j10`). Black's four amazons start on `a4`,
+  `d1`, `g1`, and `j4`; White's on `a7`, `d10`, `g10`, and `j7`.
+- A move is written `<from><to>/<arrow>` (`d1d7/g7`): one of the mover's
+  amazons slides like a chess queen, any distance in one of eight
+  directions over empty squares, and then shoots an arrow the same way from
+  where it landed. The square the amazon left counts as empty for the
+  arrow. The arrow's square is burnt and blocks amazons and arrows for the
+  rest of the game.
+- The player left without a legal move loses; the game cannot be drawn and
+  `x="draw"` is never valid. The opening position has 2176 legal moves.
+- `legal_moves` lists the legal moves sorted by their text (byte order).
+- `board` uses `x` for a burnt square.
+- Board reason: `nm` (no legal move).
+- Reference game (Appendix F.4 policy): seed 15, won by White when Black
+  is left without a move.
+
+### G.7 Pente (`pente.1`)
+
+- The board is 19×19 (`a1`–`s19`). A move places a stone on an empty
+  square; there is no opening restriction.
+- **Captures.** If the new stone and another stone of the mover's color
+  flank exactly two opposing stones in a straight line (horizontally,
+  vertically, or diagonally), those two stones are removed and the mover
+  scores one captured pair. Every such pair around the new stone is
+  captured. Placing a stone between two opposing stones is safe, and lines
+  of one or three opposing stones are never captured.
+- After captures, five or more in a row through the new stone wins, and
+  otherwise a fifth captured pair wins. Filling the last empty square
+  without either draws.
+- `legal_moves` lists the empty squares by ascending rank, then file.
+- Additional local metadata: `black_captures` and `white_captures`
+  (captured pairs).
+- Board reasons: `5ir` (five in a row), `cap` (five captured pairs), and
+  `ful` (full board).
+- Reference game (Appendix F.4 policy): seed 13, won by White's fifth
+  captured pair.
+
+## H. Battleship Reference Game
+
+Battleship (`battleship.1`) is a built-in two-player game with hidden
+information. Its session type is `turn_based` and validation model is
+`both`. Each player commits to a fleet before play and reveals it at the
+end, so every answer a player gave can be checked. This appendix defines an
+LRGP reference application; it does not change the base LRGP protocol
+version.
+
+### Board, Fleet, and Commitment
+
+- The board is 10×10 with squares named as in Appendix E.1 (`a1`–`j10`).
+- A fleet is five ships of lengths 5, 4, 3, 3, and 2, in that order. Its
+  canonical text is five tokens joined by single spaces, one per ship in
+  fleet order. A token is the ship's first square followed by `h` (the ship
+  runs toward higher files) or `v` (toward higher ranks): `a1h` is a ship on
+  a1, b1, c1, … Every ship MUST lie on the board and no two ships may share
+  a square. Ships may touch.
+- A salt is 32 lowercase hexadecimal characters (16 random bytes).
+- A commitment is the lowercase hexadecimal SHA-256 of the ASCII text
+  `<fleet>:<salt>`. For fleet `a1h a2h a3h a4h a5h` and salt
+  `00112233445566778899aabbccddeeff` it is
+  `c64fbc70ca15a8f7ab30eb4855d65df26150d34d7016b6a1e44f57396e0a8aeb`.
+- The responder flips a coin when accepting and sends the first shooter's
+  identity in `b`. The first shooter is `b` (Black) in `my_color`.
+
+### Play
+
+Players alternate plies. A ply is one of:
+
+1. **Shot** — fire at a square the mover has not fired at before, and
+   answer the opponent's previous shot: `m` (miss), `h` (hit), or `s` (the
+   hit was the last unhit square of a ship, which sinks). The very first ply
+   has no shot to answer and carries the answer `""`.
+2. **Concession** — when the opponent's previous shot sinks the mover's last
+   ship, the mover answers `s` and reveals its fleet and salt instead of
+   shooting.
+3. **Reveal** — the only ply allowed after a concession: the winner reveals
+   its own fleet and salt, and the game ends with the winner (`x="win"`).
+
+A player whose fleet has been sunk MUST concede rather than shoot. There are
+no board draws; draws may be negotiated with `draw_offer` and
+`draw_accept`, and either player may resign.
+
+### Canonical Command Payloads
+
+Inbound wire payloads MUST contain exactly the keys shown. Missing,
+additional, or incorrectly typed values MUST be rejected before mutation.
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{h}`, the challenger's commitment |
+| `accept` | `{b, h}`, the first shooter and the responder's commitment |
+| `decline` | `{}` |
+| shot `move` | `{s, a, n, x}` with `s` a square, `a` the answer, and `x=""` |
+| concession `move` | `{a, f, k, n, x}` with `a="s"`, the fleet `f`, the salt `k`, and `x=""` |
+| reveal `move` | `{f, k, n, x, w}` with `x="win"` and `w` the mover |
+| `resign` | `{}` |
+| `draw_offer` | `{}` |
+| `draw_accept` | `{}` |
+| `draw_decline` | `{}` |
+
+`n` is the 0-based ply counter. The local outgoing API accepts `{}`, `{f}`,
+or `{f, k}` for `challenge` and `accept` (a missing fleet or salt is chosen
+at random), `{s}` for a shot, and `{}` for a concession or reveal. The
+implementation derives every answer, `n`, and the terminal claim.
+
+### Checking
+
+- A receiver MUST reject a ply from the participant not to move, a
+  non-sequential `n`, a repeated or invalid square, a missing or malformed
+  answer, a shot from a player who has reported all five ships sunk, and
+  more than 17 reported hits.
+- A revealed fleet MUST be canonical and match the sender's commitment.
+  Once a fleet is revealed, the receiver MUST replay every answer its owner
+  gave against it and reject the ply if any answer is false, or if a
+  concession does not in fact sink the last ship.
+- A receiver MUST reject a reveal unless the receiver conceded in the
+  previous ply.
+
+### Canonical Local Metadata
+
+The reference applications expose `my_color`, `first_turn`, `turn`,
+`phase`, `shots`, `answers`, `move_count`, `last_move`, `legal_moves`,
+`my_fleet`, `my_salt`, `my_commit`, `their_commit`, `their_fleet`,
+`their_salt`, `my_board`, `their_board`, `my_sunk`, `their_sunk`, `winner`,
+`terminal`, `terminal_reason`, `draw_offered`, and `draw_offered_by`.
+
+- `shots` and `answers` hold one entry per ply: the square fired at (`""`
+  for a concession or reveal) and the answer carried (`""` for the first ply
+  and the reveal).
+- `phase` is what the player to move must do: `shoot`, `concede`, or
+  `reveal` (empty once the game is over). Only a player's own side knows
+  when it must concede, so the opponent's phase reads `shoot` until then.
+- `legal_moves` lists the squares the player to move has not fired at
+  (ascending rank, then file) in the `shoot` phase, and is empty otherwise.
+- `my_board` is 100 cells row-major from `a10`: `s` ship, `x` hit ship,
+  `o` miss, `_` water. `their_board` uses `x` and `o` for answered shots,
+  `?` for the last shot before its answer arrives, and `_` elsewhere; once
+  the opponent's fleet is revealed it uses `my_board`'s encoding.
+- `my_sunk` and `their_sunk` count sunk ships.
+- `terminal_reason` is `snk` (fleet sunk), `rsn`, or `agr`.
+
+Persistence hydration MUST check the stored fleet against its commitment,
+replay the plies, and revalidate the turn, derived boards, terminal status,
+winner, and participant bindings before accepting a stored session.
+
+### Reference Game
+
+The shared fixtures include a reference game with fixed fleets and salts:
+the challenger's fleet is `b2v d9h g3v i6v e1h` with salt
+`00112233445566778899aabbccddeeff`, and the responder's is
+`a10h c2v f5h h7v j1v` with salt `ffeeddccbbaa99887766554433221100`. The
+challenger shoots first, and every shot follows the Appendix F.4 policy
+over the shooter's `legal_moves` with seed 3. After 148 plies the
+challenger's fleet is sunk; the challenger concedes and the responder
+reveals and wins. Conforming implementations MUST derive the same shots,
+answers, concession, and reveal.
+
+## I. Rock Paper Scissors Reference Game
+
+Rock Paper Scissors (`rps.1`) is a built-in two-player match won by the
+first player to win three rounds; tied rounds do not count. Its session
+type is `round_based` and validation model is `both`. Because the players
+cannot choose at the same moment over LXMF, one player commits to each
+choice before the other picks. This appendix defines an LRGP reference
+application; it does not change the base LRGP protocol version.
+
+### Roles and Commitment
+
+- The responder flips a coin when accepting and sends the leader's
+  identity in `b` (the ACCEPT payload is `{b}`, as in Appendix E.1). The
+  leader is `b` (Black) in `my_color`; the other player is the follower.
+- A choice is `r` (rock), `p` (paper), or `s` (scissors). Rock beats
+  scissors, scissors beat paper, and paper beats rock.
+- A salt is 32 lowercase hexadecimal characters. A commitment is the
+  lowercase hexadecimal SHA-256 of the ASCII text `<choice>:<salt>`. For
+  choice `r` and salt `00112233445566778899aabbccddeeff` it is
+  `43cde9c5adb91a12b3311cc17a33f446dc379049bae82ad0ff5b391c13cd7a4a`.
+
+### Plies
+
+Players alternate, the leader first:
+
+1. **Commit** (the first ply): the leader sends a commitment to its
+   first-round choice.
+2. **Choose**: the follower sends its choice in the open.
+3. **Reveal**: the leader reveals the committed choice and salt, which
+   decides the round, and in the same ply commits to its next choice. If
+   the round gives either player a third win, the reveal ends the match
+   instead and carries no new commitment; the winner need not be the
+   leader.
+
+Choose and reveal then repeat until the match ends. Draws may be
+negotiated with `draw_offer` and `draw_accept`, and either player may
+resign.
+
+### Canonical Command Payloads
+
+| Command | Exact wire payload |
+|---------|--------------------|
+| `challenge` | `{}` |
+| `accept` | `{b}` |
+| `decline` | `{}` |
+| commit `move` | `{h, n, x}` with `x=""` |
+| choose `move` | `{c, n, x}` with `x=""` |
+| reveal `move` | `{c, k, h, n, x}` with `x=""` |
+| final reveal `move` | `{c, k, n, x, w}` with `x="win"` and `w` the match winner |
+| `resign`, `draw_offer`, `draw_accept`, `draw_decline` | `{}` |
+
+`n` is the 0-based ply counter. A receiver MUST reject a ply out of turn or
+sequence, a malformed choice, salt, or commitment, a reveal that does not
+match the outstanding commitment, a reveal that commits again after the
+match is decided or fails to commit while it goes on, and a false winner.
+
+The local outgoing API accepts `{c}` (optionally with `k` for a choice
+that will be committed) when a choice is due, and `{}` for a final reveal.
+The implementation keeps the leader's committed choice and salt in local
+metadata until it reveals them.
+
+### Canonical Local Metadata
+
+The reference applications expose `my_color`, `first_turn`, `turn`,
+`phase` (`commit`, `choose`, or `reveal` for the player to move, empty when
+the match is over), `plies` (one object per ply holding its `c`, `k`, and
+`h` values), `rounds` (`[leader, follower]` choice pairs), `black_score` and
+`white_score` (round wins of the leader and the follower), `move_count`,
+`legal_moves` (`p`, `r`, `s` when the player to move picks a choice, empty
+for a final reveal or a finished match), `my_choice` and `my_salt` (the
+leader's committed secret), `winner`, `terminal`, `terminal_reason` (`rnd`,
+`rsn`, or `agr`), `draw_offered`, and `draw_offered_by`. Hydration MUST
+replay the plies, check the leader's stored secret against the outstanding
+commitment, and revalidate the turn, terminal status, and winner.
+
+### Reference Game
+
+The shared fixtures include a reference match. The challenger leads, and
+the rounds follow a fixed script of (leader, follower) choices: `r`/`p`,
+`s`/`p`, `p`/`p`, `r`/`s`, `s`/`r`, and `p`/`s`. The leader's salt for its
+commitment to round `i` (counting from 0) is the byte `i` repeated 16 times
+in hexadecimal, so round 0 uses `00000000000000000000000000000000`. After
+13 plies the follower has won 3 rounds to 2, and the leader's final reveal
+names the responder as the winner. Conforming implementations MUST produce
+the same commitments and payloads.
